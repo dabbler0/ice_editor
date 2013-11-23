@@ -1,15 +1,32 @@
 div.block {
-  /*position: absolute;*/
+  display: inline-block;
   border: 1px solid black;
   padding: 2px;
   font-family: monospace;
   white-space: pre;
   cursor: pointer;
+  min-width: 20px;
 }
 
 div.socket {
   border: 1px solid black;
-  width: 20px;
-  height: 15px;
+  min-width: 20px;
+  min-height: 20px;
+  vertical-align: baseline;
   display: inline-block;
+}
+
+div.ui-state-hover {
+  outline: 3px solid #0F0;
+}
+
+div.block_socket {
+  margin-left: 2em;
+  border: 1px solid black;
+  min-height: 20px;
+}
+
+div#out {
+  white-space: pre;
+  font-family: monospace;
 }
