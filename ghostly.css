@@ -1,0 +1,15 @@
+div.block {
+  /*position: absolute;*/
+  border: 1px solid black;
+  padding: 2px;
+  font-family: monospace;
+  white-space: pre;
+  cursor: pointer;
+}
+
+div.socket {
+  border: 1px solid black;
+  width: 20px;
+  height: 15px;
+  display: inline-block;
+}
