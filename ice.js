@@ -177,39 +177,41 @@
     if (drag._ice_literal_parent != null) {
       drag._ice_literal_parent._ice_insertable = true;
     }
-    if (($(drop)).hasClass("block")) {
-      for (i = _j = 0, _ref1 = drop._ice_parent.args[drop._ice_number].lines.length; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
-        if (drop._ice_parent.args[drop._ice_number].lines[i] === drop._ice_tree) {
-          drop._ice_parent.args[drop._ice_number].lines.splice(i + 1, 0, drag._ice_tree);
-          break;
+    if (drop != null) {
+      if (($(drop)).hasClass("block")) {
+        for (i = _j = 0, _ref1 = drop._ice_parent.args[drop._ice_number].lines.length; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
+          if (drop._ice_parent.args[drop._ice_number].lines[i] === drop._ice_tree) {
+            drop._ice_parent.args[drop._ice_number].lines.splice(i + 1, 0, drag._ice_tree);
+            break;
+          }
         }
+        drag._ice_insert_type = "block_socket";
+        drag._ice_insertable = true;
+        ($(drop)).after(($("<div>")).append($(drag)));
+      } else if (($(drop)).hasClass("block_socket")) {
+        if (drop._ice_parent.args[drop._ice_number] == null) {
+          drop._ice_parent.args[drop._ice_number] = {
+            type: 'w',
+            lines: []
+          };
+        }
+        drop._ice_parent.args[drop._ice_number].lines.unshift(drag._ice_tree);
+        drag._ice_insert_type = "block_socket";
+        drag._ice_insertable = true;
+        drop._ice_insertable = false;
+        ($(drop)).prepend(($("<div>")).prepend($(drag)));
+      } else {
+        drop._ice_parent.args[drop._ice_number] = drag._ice_tree;
+        drag._ice_insert_type = "socket";
+        drag._ice_insertable = false;
+        drop._ice_insertable = false;
+        ($(drop)).append($(drag));
       }
-      drag._ice_insert_type = "block_socket";
-      drag._ice_insertable = true;
-      ($(drop)).after(($("<div>")).append($(drag)));
-    } else if (($(drop)).hasClass("block_socket")) {
-      if (drop._ice_parent.args[drop._ice_number] == null) {
-        drop._ice_parent.args[drop._ice_number] = {
-          type: 'w',
-          lines: []
-        };
-      }
-      drop._ice_parent.args[drop._ice_number].lines.unshift(drag._ice_tree);
-      drag._ice_insert_type = "block_socket";
-      drag._ice_insertable = true;
-      drop._ice_insertable = false;
-      ($(drop)).prepend(($("<div>")).prepend($(drag)));
-    } else {
-      drop._ice_parent.args[drop._ice_number] = drag._ice_tree;
-      drag._ice_insert_type = "socket";
-      drag._ice_insertable = false;
-      drop._ice_insertable = false;
-      ($(drop)).append($(drag));
+      drop._ice_contents = drag;
+      drag._ice_literal_parent = drop;
+      drag._ice_parent = drop._ice_parent;
+      drag._ice_number = drop._ice_number;
     }
-    drop._ice_contents = drag;
-    drag._ice_literal_parent = drop;
-    drag._ice_parent = drop._ice_parent;
-    drag._ice_number = drop._ice_number;
     return ($("#out")).text(formatLine(root._ice_tree));
   };
 
@@ -233,6 +235,16 @@
     root = makeElement("(function() {\n%w\n}());");
     palette = $("#palette");
     workspace = $("#workspace");
+    ($("#trashbin")).droppable({
+      tolerance: "pointer",
+      activeClass: "ui-state-default",
+      hoverClass: "ui-state-hover",
+      accept: ".block",
+      drop: function(event, ui) {
+        moveTo(ui.draggable[0], null);
+        return ui.draggable.remove();
+      }
+    });
     workspace.append(root);
     templates = ["alert(%v);", "prompt(%v)", "for (var %t = 0; %t < %v; %t += 1) {\n%w\n}", "%t", "\"%t\"", "(%v === %v)", "(%v + %v)", "if (%v) {\n%w\n}\nelse {\n%w\n}"];
     for (_i = 0, _len = templates.length; _i < _len; _i++) {

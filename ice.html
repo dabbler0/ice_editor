@@ -1,18 +1,21 @@
 <html>
   <head>
     <link rel="stylesheet" href="ice.css"/>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
     <script src="vendor/autogrow.js"></script>
     <script src="ice.js"></script>
   </head>
   <body>
-  <div id="out_wrapper">
+  <div id="out_wrapper" class="blockish">
     <button id="run">Run</button>
     <div id="out">
     </div>
   </div>
-  <div id="palette"></div>
-  <div id="workspace"></div>
+  <div id="palette" class="blockish"></div>
+  <div id="workspace_wrapper" class="blockish">
+    <div id="workspace" class="blockish"></div>
+    <div id="trashbin" class="blockish"></div>
+  </div>
   </body>
 </html>

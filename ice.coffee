@@ -166,48 +166,49 @@ moveTo  = (drag, drop) ->
       drag._ice_parent.args[drag._ice_number] = null
   if drag._ice_literal_parent?
     drag._ice_literal_parent._ice_insertable = true
+  
+  if drop?
+    # Reinsert the tree
+    if ($ drop).hasClass "block"
+      for i in [0..drop._ice_parent.args[drop._ice_number].lines.length]
+        if drop._ice_parent.args[drop._ice_number].lines[i] == drop._ice_tree
+          drop._ice_parent.args[drop._ice_number].lines.splice i+1, 0, drag._ice_tree
+          break
+      drag._ice_insert_type = "block_socket"
+      
+      drag._ice_insertable = true
 
-  # Reinsert the tree
-  if ($ drop).hasClass "block"
-    for i in [0..drop._ice_parent.args[drop._ice_number].lines.length]
-      if drop._ice_parent.args[drop._ice_number].lines[i] == drop._ice_tree
-        drop._ice_parent.args[drop._ice_number].lines.splice i+1, 0, drag._ice_tree
-        break
-    drag._ice_insert_type = "block_socket"
-    
-    drag._ice_insertable = true
+      # Reinsert the element
+      ($ drop).after ($ "<div>").append ($ drag)
 
-    # Reinsert the element
-    ($ drop).after ($ "<div>").append ($ drag)
+    else if ($ drop).hasClass "block_socket"
+      if not drop._ice_parent.args[drop._ice_number]?
+        drop._ice_parent.args[drop._ice_number] = {type: 'w', lines:[]}
+      drop._ice_parent.args[drop._ice_number].lines.unshift drag._ice_tree
+      drag._ice_insert_type = "block_socket"
+      
+      # We can't append to a value-inserted block
+      drag._ice_insertable = true
+      drop._ice_insertable = false
+      
+      # Reinsert the element
+      ($ drop).prepend ($ "<div>").prepend ($ drag)
 
-  else if ($ drop).hasClass "block_socket"
-    if not drop._ice_parent.args[drop._ice_number]?
-      drop._ice_parent.args[drop._ice_number] = {type: 'w', lines:[]}
-    drop._ice_parent.args[drop._ice_number].lines.unshift drag._ice_tree
-    drag._ice_insert_type = "block_socket"
-    
-    # We can't append to a value-inserted block
-    drag._ice_insertable = true
-    drop._ice_insertable = false
-    
-    # Reinsert the element
-    ($ drop).prepend ($ "<div>").prepend ($ drag)
+    else
+      drop._ice_parent.args[drop._ice_number] = drag._ice_tree
+      drag._ice_insert_type = "socket"
 
-  else
-    drop._ice_parent.args[drop._ice_number] = drag._ice_tree
-    drag._ice_insert_type = "socket"
+      # Both are now filled
+      drag._ice_insertable = false
+      drop._ice_insertable = false
 
-    # Both are now filled
-    drag._ice_insertable = false
-    drop._ice_insertable = false
+      # Reinsert the element
+      ($ drop).append ($ drag)
 
-    # Reinsert the element
-    ($ drop).append ($ drag)
-
-  drop._ice_contents = drag
-  drag._ice_literal_parent = drop
-  drag._ice_parent = drop._ice_parent
-  drag._ice_number = drop._ice_number
+    drop._ice_contents = drag
+    drag._ice_literal_parent = drop
+    drag._ice_parent = drop._ice_parent
+    drag._ice_number = drop._ice_number
 
   # FOR EXAMPLE ONLY (might want to allow handler-binding here)
   ($ "#out").text formatLine root._ice_tree
@@ -228,6 +229,15 @@ window.onload = ->
   
   palette = ($ "#palette")
   workspace = ($ "#workspace")
+  ($ "#trashbin").droppable {
+    tolerance: "pointer"
+    activeClass: "ui-state-default"
+    hoverClass: "ui-state-hover"
+    accept: ".block"
+    drop: (event, ui) ->
+      moveTo ui.draggable[0], null
+      ui.draggable.remove()
+  }
 
   workspace.append root
 

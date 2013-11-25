@@ -34,11 +34,15 @@ div.block_socket {
   min-height: 20px;
 }
 
+div.blockish {
+  position: absolute;
+  border: 1px solid #888;
+}
+
 div#out_wrapper {
   border: 1px solid #888;
   white-space: pre;
   font-family: monospace;
-  position: absolute;
   top: 0;
   bottom: 0;
   width: 500px;
@@ -47,24 +51,42 @@ div#out_wrapper {
 
 div#palette {
   border: 1px solid #888;
-  position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
   width: 500px;
 }
 
-div#workspace {
+div.template_wrapper {
+  padding: 5px;
+}
+
+div#workspace_wrapper {
   border: 1px solid #888;
-  position: absolute;
   top: 0;
   bottom: 0;
   left: 500px;
   right: 500px;
+  overflow: auto;
 }
 
 input.input_socket {
   font-family: monospace;
   width: 20px;
   border: 1px solid black;
+}
+
+div#workspace {
+  top: 0;
+  bottom: 100px;
+  left: 0;
+  right: 0;
+}
+
+div#trashbin {
+  height: 100px;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background-color: #F00;
 }
