@@ -72,7 +72,7 @@
     in_special = false;
     element = document.createElement("div");
     element.className = "block";
-    currently_modifying = document.createElement("span");
+    currently_modifying = document.createElement("button");
     ice_tree = {
       form: template,
       args: [],
