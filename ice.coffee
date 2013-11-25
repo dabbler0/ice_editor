@@ -53,7 +53,7 @@ makeElement = (template) ->
   # Construct the element
   element = document.createElement "div"
   element.className = "block"
-  currently_modifying = document.createElement "span"
+  currently_modifying = document.createElement "button"
 
   # Construct its tree
   ice_tree = {
