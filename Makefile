@@ -1,2 +1,2 @@
 all:
-	coffee -c ghostly.coffee
+	coffee -c ice.coffee

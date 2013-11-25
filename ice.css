@@ -34,8 +34,37 @@ div.block_socket {
   min-height: 20px;
 }
 
-div#out {
+div#out_wrapper {
+  border: 1px solid #888;
   white-space: pre;
   font-family: monospace;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 500px;
+  right: 0;
+}
+
+div#palette {
+  border: 1px solid #888;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 500px;
+}
+
+div#workspace {
+  border: 1px solid #888;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 500px;
+  right: 500px;
+}
+
+input.input_socket {
+  font-family: monospace;
+  width: 20px;
   border: 1px solid black;
 }
