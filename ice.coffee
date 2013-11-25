@@ -34,7 +34,7 @@ formatLine = (tree) ->
       if char == '%'
         string += '%'
       else
-        string += fargs[x]
+        string += if fargs[x]? then fargs[x] else '  '
         x += 1
       in_special = false
     else

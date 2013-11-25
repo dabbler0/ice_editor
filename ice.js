@@ -51,7 +51,7 @@
         if (char === '%') {
           string += '%';
         } else {
-          string += fargs[x];
+          string += fargs[x] != null ? fargs[x] : '  ';
           x += 1;
         }
         in_special = false;
