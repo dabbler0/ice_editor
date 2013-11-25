@@ -16,8 +16,16 @@ div.socket {
   display: inline-block;
 }
 
-div.ui-state-hover {
-  outline: 3px solid #0F0;
+div.block.ui-state-hover {
+  border-bottom: 4px solid #888;
+}
+
+div.socket.ui-state-hover {
+  outline: 3px solid #888;
+}
+
+div.block_socket.ui-state-hover {
+  border-top: 4px solid #888;
 }
 
 div.block_socket {
@@ -29,4 +37,5 @@ div.block_socket {
 div#out {
   white-space: pre;
   font-family: monospace;
+  border: 1px solid black;
 }
