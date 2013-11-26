@@ -1,3 +1,7 @@
+body {
+  font-family: sans-serif;
+}
+
 div.block {
   display: inline-block;
   border: 1px solid black;
@@ -6,13 +10,14 @@ div.block {
   white-space: pre;
   cursor: pointer;
   min-width: 20px;
+  background: rgba(256, 256, 256, 0.5);
 }
 
 div.socket {
   border: 1px solid black;
   min-width: 20px;
   min-height: 20px;
-  vertical-align: baseline;
+  vertical-align: middle;
   display: inline-block;
 }
 
@@ -40,21 +45,48 @@ div.blockish {
 }
 
 div#out_wrapper {
-  border: 1px solid #888;
-  white-space: pre;
-  font-family: monospace;
   top: 0;
   bottom: 0;
   width: 500px;
   right: 0;
 }
 
-div#palette {
-  border: 1px solid #888;
+div#out_header {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+}
+
+div#out {
+  font-family: monospace;
+  white-space: pre;
+  top: 30px;
+  bottom: 0;
+  right: 0;
+  left: 0;
+}
+
+div#palette_wrapper {
+  width: 350px;
   top: 0;
   bottom: 0;
   left: 0;
-  width: 500px;
+}
+
+div#palette {
+  top: 30px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #FFE;
+}
+
+div#palette_header {
+  height: 30px;
+  top: 0;
+  left: 0;
+  right: 0;
 }
 
 div.template_wrapper {
@@ -65,9 +97,32 @@ div#workspace_wrapper {
   border: 1px solid #888;
   top: 0;
   bottom: 0;
-  left: 500px;
+  left: 350px;
   right: 500px;
   overflow: auto;
+}
+
+div#workspace_header {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 30px;
+}
+
+div#workspace {
+  top: 30px;
+  bottom: 100px;
+  left: 0;
+  right: 0;
+  background-color: #DDD;
+}
+
+div#trashbin {
+  height: 100px;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  background-color: #FDD;
 }
 
 input.input_socket {
@@ -76,17 +131,29 @@ input.input_socket {
   border: 1px solid black;
 }
 
-div#workspace {
-  top: 0;
-  bottom: 100px;
-  left: 0;
-  right: 0;
+button#run {
+  background-color: #2F2;
+  border: none;
+  border-radius: 3px;
+  height: 25px;
+  cursor: pointer;
 }
 
-div#trashbin {
-  height: 100px;
-  bottom: 0;
-  right: 0;
-  left: 0;
-  background-color: #F00;
+button#melt {
+  background-color: #22F;
+  border: none;
+  border-radius: 3px;
+  height: 25px;
+  cursor: pointer;
+  color: #FFF;
+}
+
+button#run:hover, button#melt:hover {
+  outline: 1px solid black;
+}
+
+body {
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
 }

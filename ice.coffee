@@ -11,19 +11,24 @@ indent = (string) ->
   return out
 
 formatBlock = (tree) ->
+  console.log "Formatting block", tree
   string = ""
   for line in tree
-    string += indent formatLine line
+    if line? and line != undefined
+      string += indent formatLine line
   return string.slice 0, -1
 
 formatLine = (tree) ->
   fargs = []
+  console.log "formatting", tree
   for arg in tree.args
-    if not arg?
+    if not arg? or arg == undefined
       fargs.push "  "
     else if arg.type == 'w'
+      console.log "Calling formatBlock on", arg
       fargs.push formatBlock arg.lines
     else
+      console.log "Calling formatLine on", arg
       fargs.push formatLine arg
   
   in_special = false
@@ -80,7 +85,7 @@ makeElement = (template) ->
           $(socket).autoGrowInput({
             comfortZone: 10
             minWidth: 20
-            maxWidth: 100
+            maxWidth: 1000
           })
           
           socket._ice_number = arg_number
@@ -132,16 +137,21 @@ makeElement = (template) ->
   ($ ".block, .socket, .block_socket").droppable {
     tolerance: "pointer"
     activeClass: "ui-state-default"
-    hoverClass: "ui-state-hover"
+    #hoverClass: "ui-state-hover"
     greedy: true
     accept: (el) ->
       return this._ice_insertable? and this._ice_insertable
     over: (event, ui) ->
+      if currentDrop.length > 0
+        ($ currentDrop[0]).removeClass "ui-state-hover"
+      ($ this).addClass "ui-state-hover"
       currentDrop.unshift this
     out: (event, ui) ->
+      ($ currentDrop[0]).removeClass "ui-state-hover"
       currentDrop.shift()
     drop: (event, ui) ->
       if currentDrop[0] == this
+        ($ this).removeClass "ui-state-hover"
         moveTo ui.draggable[0], this
         currentDrop = []
   }
@@ -213,6 +223,41 @@ moveTo  = (drag, drop) ->
   # FOR EXAMPLE ONLY (might want to allow handler-binding here)
   ($ "#out").text formatLine root._ice_tree
 
+makeElementFromBlock = (tree) ->
+
+  for line in tree
+    string += indent makeElementFromLine line
+  return string.slice 0, -1
+
+makeElementFromLine = (tree) ->
+  fargs = []
+  for arg in tree.args
+    if not arg?
+      fargs.push "  "
+    else if arg.type == 'w'
+      fargs.push formatBlock arg.lines
+    else
+      fargs.push formatLine arg
+  
+  in_special = false
+  string = ''
+  x = 0
+  for char in tree.form
+    if in_special
+      if char == '%'
+        string += '%'
+      else
+        string += if fargs[x]? and fargs[x] != undefined then fargs[x] else '  '
+        x += 1
+      in_special = false
+    else
+      if char == '%'
+        in_special = true
+      else
+        string += char
+
+  return string
+
 makeTemplateElement = (template) ->
   element = $(makeElement template)
   already_used = false
@@ -223,6 +268,130 @@ makeTemplateElement = (template) ->
       element.after new_template
       element[0]._ice_template_clone = new_template
       already_used = true)
+
+makeElementFromBlock = (block) ->
+  result = []
+  for line in block.lines
+    result.push makeElementFromTree line
+  return result
+
+makeElementFromTree = (tree) ->
+  tree = $.extend(true, {}, tree)
+
+  # Recursively parse the arguments
+  fargs = []
+  for arg in tree.args
+    if not arg?
+      fargs.push null
+    else if arg.type == "w"
+      fargs.push makeElementFromBlock arg
+    else
+      fargs.push makeElementFromTree arg
+  
+  arg_number = 0
+  in_special = false
+
+  element = document.createElement "div"
+  element.className = "block"
+  currently_modifying = document.createElement "span"
+
+  for char in tree.form
+    if in_special
+      if char == '%'
+        currently_modifying.innerText += '%'
+      else
+        element.appendChild currently_modifying
+        if char == 't'
+          socket = document.createElement "input"
+          socket.className = "input_socket"
+          socket.value = tree.args[arg_number].form
+          element.appendChild socket
+
+          $(socket).autoGrowInput({
+            comfortZone: 10
+            minWidth: 20
+            maxWdith: 1000
+          })
+
+          socket._ice_number = arg_number
+
+          socket.onkeyup = ->
+            tree.args[this._ice_number].form = this.value
+
+        else if char == 'w'
+          socket = document.createElement "div"
+          socket.className = "block_socket"
+          element.appendChild socket
+
+          socket._ice_parent = tree
+          socket._ice_number = arg_number
+
+          if fargs[arg_number] != undefined and fargs[arg_number]?
+            # Append the multiline argument if necessary
+            socket._ice_insertable = false
+            for el in fargs[arg_number]
+              new_div = document.createElement "div"
+              new_div.appendChild el
+              socket.appendChild new_div
+          else
+            socket._ice_insertable = true
+        else
+          socket = document.createElement "div"
+          socket.className = "socket"
+          element.appendChild socket
+
+          socket._ice_parent = tree
+          socket._ice_number = arg_number
+
+          if fargs[arg_number] != undefined and fargs[arg_number]?
+            socket.appendChild fargs[arg_number]
+            socket._ice_insertable = false
+          else
+            socket._ice_insertable = true
+        currently_modifying = document.createElement "span"
+        arg_number += 1
+      in_special = false
+    else
+      if char == '%'
+        in_special = true
+      else
+        currently_modifying.innerText += char
+  
+  # Finish constructing the element
+  tree.arglen = arg_number
+  element.appendChild currently_modifying
+  element._ice_tree = tree
+
+  $(element).draggable({
+    appendTo: "body"
+    cursor: "move"
+    helper: "clone"
+    revert: "invalid"
+  })
+  
+  ($ ".block, .socket, .block_socket").droppable {
+    tolerance: "pointer"
+    activeClass: "ui-state-default"
+    #hoverClass: "ui-state-hover"
+    greedy: true
+    accept: (el) ->
+      return this._ice_insertable? and this._ice_insertable
+    over: (event, ui) ->
+      if currentDrop.length > 0
+        ($ currentDrop[0]).removeClass "ui-state-hover"
+      ($ this).addClass "ui-state-hover"
+      currentDrop.unshift this
+    out: (event, ui) ->
+      ($ currentDrop[0]).removeClass "ui-state-hover"
+      currentDrop.shift()
+    drop: (event, ui) ->
+      if currentDrop[0] == this
+        ($ this).removeClass "ui-state-hover"
+        moveTo ui.draggable[0], this
+        currentDrop = []
+  }
+
+  return element
 
 window.onload = ->
   root = makeElement "(function() {\n%w\n}());"
@@ -255,12 +424,20 @@ window.onload = ->
   for template in templates
     palette.append $("<div>").addClass("template_wrapper").append makeTemplateElement template
   
-  $(document.body).keydown (e) ->
-    if e.keyCode == 13
-      palette.append $("<div>").addClass("template_wrapper").append makeTemplateElement (prompt "Enter template string:").replace(/\\n/g, "\n")
   ($ "#melt").click(->
-    $(" .block, .socket, .block_socket").css "border", "none"
+    $(" .block, .socket, .block_socket, .input_socket").animate {
+      "border-width": 0
+      padding: 0
+    }, 300
   )
   ($ "#run").click(->
     eval formatLine root._ice_tree
+  )
+
+  $("#clone").click(->
+    workspace.append makeElementFromTree root._ice_tree
+  )
+
+  $("#new_block").click(->
+      palette.append $("<div>").addClass("template_wrapper").append makeTemplateElement (prompt "Enter template string:").replace(/\\n/g, "\n")
   )

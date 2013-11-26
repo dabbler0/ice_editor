@@ -1,21 +1,33 @@
 <html>
   <head>
     <link rel="stylesheet" href="ice.css"/>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
     <script src="vendor/autogrow.js"></script>
     <script src="ice.js"></script>
   </head>
   <body>
-  <div id="out_wrapper" class="blockish">
-    <button id="run">Run</button>
-    <div id="out">
+  <div id="palette_wrapper" class="blockish">
+    <div id="palette_header" class="blockish">
+      Palette
+    </div>
+    <div id="palette" class="blockish">
+      <button id="new_block">New Block</button>
     </div>
   </div>
-  <div id="palette" class="blockish"></div>
   <div id="workspace_wrapper" class="blockish">
+    <div id="workspace_header" class="blockish">
+      Workspace <button id="melt">Melt</button> <button id="clone">Clone</button>
+    </div>
     <div id="workspace" class="blockish"></div>
-    <div id="trashbin" class="blockish"></div>
+    <div id="trashbin" class="blockish">Trash</div>
+  </div>
+  <div id="out_wrapper" class="blockish">
+    <div id="out_header" class="blockish">
+      Generated Code <button id="run">Run</button>
+    </div>
+    <div id="out" class="blockish">
+    </div>
   </div>
   </body>
 </html>
