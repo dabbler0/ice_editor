@@ -11,7 +11,6 @@ indent = (string) ->
   return out
 
 formatBlock = (tree) ->
-  console.log "Formatting block", tree
   string = ""
   for line in tree
     if line? and line != undefined
@@ -20,15 +19,12 @@ formatBlock = (tree) ->
 
 formatLine = (tree) ->
   fargs = []
-  console.log "formatting", tree
   for arg in tree.args
     if not arg? or arg == undefined
       fargs.push "  "
     else if arg.type == 'w'
-      console.log "Calling formatBlock on", arg
       fargs.push formatBlock arg.lines
     else
-      console.log "Calling formatLine on", arg
       fargs.push formatLine arg
   
   in_special = false
@@ -64,7 +60,6 @@ makeElement = (template) ->
   ice_tree = {
     form: template
     args: []
-    element: element
   }
 
   element._ice_tree = ice_tree
@@ -95,7 +90,7 @@ makeElement = (template) ->
           }
 
           socket.onkeyup = ->
-            ice_tree.args[this._ice_number].form = this.value
+            ice_tree.args[this._ice_number].form = this.value.replace(/\%/g, "%%");
 
             #EXAMPLE ONLY
             ($ "#out").text formatLine root._ice_tree
@@ -128,7 +123,6 @@ makeElement = (template) ->
   # Init the element as draggable and refresh the droppable properties
   ($ element).draggable({
     appendTo: "body"
-    cursor: "move"
     helper: "clone"
     revert: "invalid"
   })
@@ -394,7 +388,7 @@ makeElementFromTree = (tree) ->
   return element
 
 window.onload = ->
-  root = makeElement "(function() {\n%w\n}());"
+  root = makeElement "(->\n%w\n)()"
   
   palette = ($ "#palette")
   workspace = ($ "#workspace")
@@ -411,14 +405,15 @@ window.onload = ->
   workspace.append root
 
   templates = [
-    "alert(%v);",
+    "alert(%v)",
     "prompt(%v)",
-    "for (var %t = 0; %t < %v; %t += 1) {\n%w\n}",
+    "for %t in [0..%v]\n%w",
+    "for %t in %v\n%w",
     "%t",
     "\"%t\"",
-    "(%v === %v)",
+    "(%v == %v)",
     "(%v + %v)",
-    "if (%v) {\n%w\n}\nelse {\n%w\n}"
+    "if %v \n%w\nelse \n%w"
   ]
 
   for template in templates
@@ -431,7 +426,7 @@ window.onload = ->
     }, 300
   )
   ($ "#run").click(->
-    eval formatLine root._ice_tree
+    CoffeeScript.eval formatLine root._ice_tree
   )
 
   $("#clone").click(->
@@ -442,10 +437,18 @@ window.onload = ->
       palette.append $("<div>").addClass("template_wrapper").append makeTemplateElement (prompt "Enter template string:").replace(/\\n/g, "\n")
   )
 
+  $("#save").click(->
+    
+  )
+
+  $("#load").click(->
+    for own key, val of localStorage
+      console.log key, val
+  )
+
   $.contextMenu {
     selector: ".block",
     callback: (key, options) ->
-      console.log this
       if key == "copy"
         workspace.append makeElementFromTree this[0]._ice_tree
       else if key == 'delete'
@@ -457,4 +460,3 @@ window.onload = ->
     }
   }
 
-  $(".block").on('click', -> console.log('clicked'))
