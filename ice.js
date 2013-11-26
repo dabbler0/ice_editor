@@ -456,8 +456,33 @@
     $("#clone").click(function() {
       return workspace.append(makeElementFromTree(root._ice_tree));
     });
-    return $("#new_block").click(function() {
+    $("#new_block").click(function() {
       return palette.append($("<div>").addClass("template_wrapper").append(makeTemplateElement((prompt("Enter template string:")).replace(/\\n/g, "\n"))));
+    });
+    $.contextMenu({
+      selector: ".block",
+      callback: function(key, options) {
+        console.log(this);
+        if (key === "copy") {
+          return workspace.append(makeElementFromTree(this[0]._ice_tree));
+        } else if (key === 'delete') {
+          moveTo(this[0], null);
+          return this.remove();
+        }
+      },
+      items: {
+        "copy": {
+          name: "Copy",
+          icon: "copy"
+        },
+        "delete": {
+          name: "Delete",
+          icon: "delete"
+        }
+      }
+    });
+    return $(".block").on('click', function() {
+      return console.log('clicked');
     });
   };
 

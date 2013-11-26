@@ -441,3 +441,20 @@ window.onload = ->
   $("#new_block").click(->
       palette.append $("<div>").addClass("template_wrapper").append makeTemplateElement (prompt "Enter template string:").replace(/\\n/g, "\n")
   )
+
+  $.contextMenu {
+    selector: ".block",
+    callback: (key, options) ->
+      console.log this
+      if key == "copy"
+        workspace.append makeElementFromTree this[0]._ice_tree
+      else if key == 'delete'
+        moveTo this[0], null
+        this.remove()
+    items: {
+      "copy": {name: "Copy", icon: "copy"}
+      "delete": {name: "Delete", icon: "delete"}
+    }
+  }
+
+  $(".block").on('click', -> console.log('clicked'))
