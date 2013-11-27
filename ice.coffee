@@ -86,6 +86,7 @@ makeElement = (template) ->
           socket._ice_number = arg_number
           ice_tree.args[arg_number] = {
             form: ""
+            type: "textonly"
             args: []
           }
 
@@ -110,6 +111,7 @@ makeElement = (template) ->
             
             ice_tree.args[arg_number] = {
               form: ""
+              type: "textonly"
               args: []
             }
 
@@ -201,6 +203,7 @@ moveTo  = (drag, drop) ->
     $(drag._ice_literal_parent._ice_alt_input).show()
     drag._ice_parent.args[drag._ice_number] = {
       form: "",
+      type: "textonly"
       args: []
     }
   
@@ -309,7 +312,7 @@ makeElementFromTree = (tree) ->
   # Recursively parse the arguments
   fargs = []
   for arg in tree.args
-    if not arg?
+    if not arg? or arg.type == "textonly"
       fargs.push null
     else if arg.type == "w"
       fargs.push makeElementFromBlock arg
@@ -370,8 +373,7 @@ makeElementFromTree = (tree) ->
         else
           input_socket = document.createElement "input"
           input_socket.className = "input_socket"
-          input_socket.value = tree.args[arg_number].form
-
+          input_socket.value = if tree.args[arg_number]? then tree.args[arg_number].form else ""
 
           input_socket._ice_number = arg_number
 

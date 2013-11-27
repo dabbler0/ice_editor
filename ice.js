@@ -99,6 +99,7 @@
             socket._ice_number = arg_number;
             ice_tree.args[arg_number] = {
               form: "",
+              type: "textonly",
               args: []
             };
             socket.onkeyup = function() {
@@ -115,6 +116,7 @@
               input_socket._ice_number = arg_number;
               ice_tree.args[arg_number] = {
                 form: "",
+                type: "textonly",
                 args: []
               };
               input_socket.onkeyup = function() {
@@ -206,6 +208,7 @@
       $(drag._ice_literal_parent._ice_alt_input).show();
       drag._ice_parent.args[drag._ice_number] = {
         form: "",
+        type: "textonly",
         args: []
       };
     }
@@ -330,7 +333,7 @@
     _ref = tree.args;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       arg = _ref[_i];
-      if (arg == null) {
+      if ((arg == null) || arg.type === "textonly") {
         fargs.push(null);
       } else if (arg.type === "w") {
         fargs.push(makeElementFromBlock(arg));
@@ -390,7 +393,7 @@
           } else {
             input_socket = document.createElement("input");
             input_socket.className = "input_socket";
-            input_socket.value = tree.args[arg_number].form;
+            input_socket.value = tree.args[arg_number] != null ? tree.args[arg_number].form : "";
             input_socket._ice_number = arg_number;
             input_socket.onkeyup = function() {
               return tree.args[this._ice_number].form = this.value;
