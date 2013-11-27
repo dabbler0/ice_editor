@@ -12,7 +12,7 @@
   </head>
   <body>
   <div id="palette_wrapper" class="blockish">
-    <div id="palette_header" class="blockish">
+    <div id="palette_header" class="blockish header">
       Palette
     </div>
     <div id="palette" class="blockish">
@@ -20,18 +20,25 @@
     </div>
   </div>
   <div id="workspace_wrapper" class="blockish">
-    <div id="workspace_header" class="blockish">
+    <div id="workspace_header" class="blockish header">
       Workspace <button id="melt">Melt</button> <button id="save">Save</button> <button id="load">Load</button>
     </div>
     <div id="workspace" class="blockish"></div>
     <div id="trashbin" class="blockish">Trash</div>
   </div>
   <div id="out_wrapper" class="blockish">
-    <div id="out_header" class="blockish">
+    <div id="out_header" class="blockish header">
       Generated Code <button id="run">Run</button>
     </div>
     <div id="out" class="blockish">
     </div>
+
+  </div>
+  <div id="dialog" class="blockish">
+    <div id="dialog_title"></div>
+    <div id="list">
+    </div>
+    <input id="name"></input>
   </div>
   </body>
 </html>

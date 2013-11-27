@@ -90,7 +90,7 @@ makeElement = (template) ->
           }
 
           socket.onkeyup = ->
-            ice_tree.args[this._ice_number].form = this.value.replace(/\%/g, "%%");
+            ice_tree.args[this._ice_number].form = this.value.replace(/\%/g, "%%")
 
             #EXAMPLE ONLY
             ($ "#out").text formatLine root._ice_tree
@@ -100,6 +100,33 @@ makeElement = (template) ->
           socket = document.createElement "div"
           socket.className = if char == 'w' then "block_socket" else "socket"
           element.appendChild socket
+          
+          if char != 'w'
+            input_socket = document.createElement "input"
+            input_socket.className = "input_socket"
+
+            
+            input_socket._ice_number = arg_number
+            
+            ice_tree.args[arg_number] = {
+              form: ""
+              args: []
+            }
+
+            input_socket.onkeyup = ->
+              ice_tree.args[this._ice_number].form = this.value.replace(/\%/g, "%%")
+
+              #EXAMPLE ONLY
+              ($ "#out").text formatLine root._ice_tree
+          
+            socket.appendChild input_socket
+            socket._ice_alt_input = input_socket
+
+            $(input_socket).autoGrowInput({
+              comfortZone: 10
+              minWidth: 20
+              maxWidth: 1000
+            })
 
           # These things for later use when snapping things in 
           socket._ice_parent = ice_tree
@@ -170,6 +197,12 @@ moveTo  = (drag, drop) ->
       drag._ice_parent.args[drag._ice_number] = null
   if drag._ice_literal_parent?
     drag._ice_literal_parent._ice_insertable = true
+  if drag._ice_literal_parent? and drag._ice_literal_parent._ice_alt_input != undefined
+    $(drag._ice_literal_parent._ice_alt_input).show()
+    drag._ice_parent.args[drag._ice_number] = {
+      form: "",
+      args: []
+    }
   
   if drop?
     # Reinsert the tree
@@ -199,6 +232,8 @@ moveTo  = (drag, drop) ->
       ($ drop).prepend ($ "<div>").prepend ($ drag)
 
     else
+      if drop._ice_alt_input != undefined
+        $(drop._ice_alt_input).hide()
       drop._ice_parent.args[drop._ice_number] = drag._ice_tree
       drag._ice_insert_type = "socket"
 
@@ -270,7 +305,6 @@ makeElementFromBlock = (block) ->
   return result
 
 makeElementFromTree = (tree) ->
-  tree = $.extend(true, {}, tree)
 
   # Recursively parse the arguments
   fargs = []
@@ -324,21 +358,44 @@ makeElementFromTree = (tree) ->
             # Append the multiline argument if necessary
             socket._ice_insertable = false
             for el in fargs[arg_number]
+              el._ice_parent = tree
+              el._ice_number = arg_number
+              el._ice_insertable = true
+              el._ice_literal_parent = socket
               new_div = document.createElement "div"
               new_div.appendChild el
               socket.appendChild new_div
           else
             socket._ice_insertable = true
         else
+          input_socket = document.createElement "input"
+          input_socket.className = "input_socket"
+          input_socket.value = tree.args[arg_number].form
+
+
+          input_socket._ice_number = arg_number
+
+          input_socket.onkeyup = ->
+            tree.args[this._ice_number].form = this.value
+
           socket = document.createElement "div"
           socket.className = "socket"
           element.appendChild socket
+          socket.appendChild input_socket
+
+          $(input_socket).autoGrowInput({
+            comfortZone: 10
+            minWidth: 20
+            maxWdith: 1000
+          })
 
           socket._ice_parent = tree
           socket._ice_number = arg_number
+          socket._ice_alt_input = input_socket
 
           if fargs[arg_number] != undefined and fargs[arg_number]?
             socket.appendChild fargs[arg_number]
+            $(input_socket).hide()
             socket._ice_insertable = false
           else
             socket._ice_insertable = true
@@ -362,11 +419,11 @@ makeElementFromTree = (tree) ->
     helper: "clone"
     revert: "invalid"
   })
+
   
   ($ ".block, .socket, .block_socket").droppable {
     tolerance: "pointer"
     activeClass: "ui-state-default"
-    #hoverClass: "ui-state-hover"
     greedy: true
     accept: (el) ->
       return this._ice_insertable? and this._ice_insertable
@@ -386,6 +443,14 @@ makeElementFromTree = (tree) ->
   }
 
   return element
+
+getSavedList = ->
+  return key for key of localStorage
+
+loadProgram = (name) ->
+
+saveProgram = (name) ->
+  localStorage[name] = JSON.stringify root._ice_tree
 
 window.onload = ->
   root = makeElement "(->\n%w\n)()"
@@ -437,20 +502,53 @@ window.onload = ->
       palette.append $("<div>").addClass("template_wrapper").append makeTemplateElement (prompt "Enter template string:").replace(/\\n/g, "\n")
   )
 
-  $("#save").click(->
-    
-  )
+  dialog = $("#dialog").hide()
+  dialog_title = $("#dialog_title")
+  list = $("#list")
 
   $("#load").click(->
-    for own key, val of localStorage
-      console.log key, val
+    dialog.show()
+    dialog_title.text("Load program")
+    list.html("")
+    for key of localStorage
+      (->
+        name = key
+        list.append $("<div>").text(name).addClass("list_element").click ->
+            $(root).remove()
+            root = makeElementFromTree JSON.parse localStorage[name]
+            workspace.append root
+            ($ "#out").text formatLine root._ice_tree
+            dialog.hide())()
+      $("#name").keydown (e) ->
+        if e.keyCode == 13
+            $(root).remove()
+            root = makeElementFromTree JSON.parse localStorage[this.value]
+            workspace.append root
+            ($ "#out").text formatLine root._ice_tree
+            dialog.hide()
+  )
+
+  $("#save").click(->
+    dialog.show()
+    dialog_title.text("Save program")
+    list.html("")
+    for key of localStorage
+      (->
+        name = key
+        list.append $("<div>").text(name).addClass("list_element").click ->
+            saveProgram name
+            dialog.hide())()
+      $("#name").keydown (e) ->
+        if e.keyCode == 13
+          saveProgram this.value
+          dialog.hide()
   )
 
   $.contextMenu {
     selector: ".block",
     callback: (key, options) ->
       if key == "copy"
-        workspace.append makeElementFromTree this[0]._ice_tree
+        workspace.append makeElementFromTree $.extend(true, {}, this[0]._ice_tree)
       else if key == 'delete'
         moveTo this[0], null
         this.remove()

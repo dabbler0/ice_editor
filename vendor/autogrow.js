@@ -48,6 +48,7 @@
             input.after(testSubject);
 
             $(this).bind('keyup keydown blur update', check);
+            setInterval(check, 10);
 
         });
 

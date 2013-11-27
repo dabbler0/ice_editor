@@ -14,7 +14,8 @@ div.block {
 }
 
 div.socket {
-  border: 1px solid black;
+  padding: 0;
+  margin: 0;
   min-width: 20px;
   min-height: 20px;
   vertical-align: middle;
@@ -43,6 +44,11 @@ div.block_socket {
 div.blockish {
   position: absolute;
   border: 1px solid #888;
+}
+
+div.header {
+  line-height: 30px;
+  height: 30px;
 }
 
 div#out_wrapper {
@@ -129,6 +135,7 @@ div#trashbin {
 input.input_socket {
   font-family: monospace;
   width: 20px;
+  height: 20px;
   border: 1px solid black;
 }
 
@@ -140,7 +147,7 @@ button#run {
   cursor: pointer;
 }
 
-button#melt {
+button#melt, button#save, button#load {
   background-color: #22F;
   border: none;
   border-radius: 3px;
@@ -149,7 +156,7 @@ button#melt {
   color: #FFF;
 }
 
-button#run:hover, button#melt:hover {
+button#run:hover, button#melt:hover, button#save:hover, button#load:hover {
   outline: 1px solid black;
 }
 
@@ -158,4 +165,39 @@ body {
   cursor: default;
   user-select: none;
   -webkit-user-select: none;
+}
+
+
+div#dialog {
+  position: absolute;
+  height: 300px;
+  width: 500px;
+  left: 50%;
+  top: 50%;
+  margin-left: -250px;
+  margin-top: -150px;
+  background-color: #FFF;
+  box-shadow: 0 0 10px #000;
+}
+
+div.list_element {
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+div.list_element:hover {
+  background-color: #AAA;
+}
+
+div#list {
+  padding: 5px;
+}
+
+div#dialog_title {
+  border-bottom: 1px solid #000;
+}
+
+input#name {
+  margin-left: 20px;
+  border: 1px solid #000;
 }
