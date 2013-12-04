@@ -1,203 +1,62 @@
-body {
-  font-family: sans-serif;
-}
-
-div.block {
+.ice_segment {
+  position: relative;
   display: inline-block;
-  border: 1px solid black;
-  padding: 2px;
-  font-family: monospace;
-  white-space: pre;
-  cursor: pointer;
-  min-width: 20px;
-  background: rgba(256, 256, 256, 0.5);
-}
-
-div.socket {
-  padding: 0;
-  margin: 0;
-  min-width: 20px;
-  min-height: 20px;
   vertical-align: middle;
-  display: inline-block;
-}
-
-div.block.ui-state-hover {
-  border-bottom: 4px solid #FF0;
-}
-
-div.socket.ui-state-hover {
-  outline: 3px solid #FF0;
-}
-
-div.block_socket.ui-state-hover {
-  border-top: 4px solid #FF0;
-}
-
-div.block_socket {
-  margin-left: 2em;
-  border: 1px solid black;
+  border-radius: 3px;
+  border: 1px solid #888;
+  min-width: 20px;
   min-height: 20px;
-  min-width: 100px;
+  overflow: show;
 }
-
-div.blockish {
+.ice_statement {
+  white-space: nowrap;
+}
+.ice_drop_target {
   position: absolute;
-  border: 1px solid #888;
-}
-
-div.header {
-  line-height: 30px;
-  height: 30px;
-}
-
-div#out_wrapper {
-  top: 0;
-  bottom: 0;
-  width: 500px;
-  right: 0;
-}
-
-div#out_header {
-  top: 0;
+  bottom: -5;
   left: 0;
-  right: 0;
-  height: 30px;
-}
-
-div#out {
-  font-family: monospace;
-  white-space: pre;
-  top: 30px;
-  bottom: 0;
-  right: 0;
-  left: 0;
-}
-
-div#palette_wrapper {
-  width: 350px;
-  top: 0;
-  bottom: 0;
-  left: 0;
-}
-
-div#palette {
-  top: 30px;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: #FFE;
-}
-
-div#palette_header {
-  height: 30px;
-  top: 0;
-  left: 0;
-  right: 0;
-}
-
-div.template_wrapper {
-  padding: 5px;
-}
-
-div#workspace_wrapper {
-  border: 1px solid #888;
-  top: 0;
-  bottom: 0;
-  left: 350px;
-  right: 500px;
-}
-
-div#workspace_header {
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 30px;
-}
-
-div#workspace {
-  top: 30px;
-  bottom: 100px;
-  left: 0;
-  right: 0;
-  overflow: auto;
-  background-color: #DDD;
-}
-
-div#trashbin {
-  height: 100px;
-  bottom: 0;
-  right: 0;
-  left: 0;
-  background-color: #FDD;
-}
-
-input.input_socket {
-  font-family: monospace;
+  height: 10px;
   width: 20px;
-  height: 20px;
-  border: 1px solid black;
+  border: 1px solid #888;
 }
-
-button#run {
-  background-color: #2F2;
-  border: none;
-  border-radius: 3px;
-  height: 25px;
-  cursor: pointer;
-}
-
-button#melt, button#save, button#load {
-  background-color: #22F;
-  border: none;
-  border-radius: 3px;
-  height: 25px;
-  cursor: pointer;
-  color: #FFF;
-}
-
-button#run:hover, button#melt:hover, button#save:hover, button#load:hover {
-  outline: 1px solid black;
-}
-
-body {
-  overflow: hidden;
-  cursor: default;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-
-div#dialog {
+.ice_block_drop_target {
   position: absolute;
-  height: 300px;
+  top: -5;
+  left: 0;
+  height: 10px;
+  width: 20px;
+  border: 1px solid #888;
+}
+.highlight {
+  outline: 1px solid #FF0;
+}
+.blockish {
+  position: absolute;
+  border: 1px solid #888;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+}
+.ice_palette {
+  width: 30%;
+}
+.ice_workspace {
+  left: 30%;
+  overflow: auto;
+}
+
+#editor {
+  height: 200px;
   width: 500px;
-  left: 50%;
-  top: 50%;
-  margin-left: -250px;
-  margin-top: -150px;
-  background-color: #FFF;
-  box-shadow: 0 0 10px #000;
+  position: relative;
 }
 
-div.list_element {
-  cursor: pointer;
-  margin-left: 10px;
+.ice_input {
+  height: 20px;
+  width: 20px;
 }
 
-div.list_element:hover {
-  background-color: #AAA;
-}
-
-div#list {
-  padding: 5px;
-}
-
-div#dialog_title {
-  border-bottom: 1px solid #000;
-}
-
-input#name {
-  margin-left: 20px;
-  border: 1px solid #000;
+.ice_segment ~ .ice_input {
+  display: none;
 }
