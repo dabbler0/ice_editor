@@ -1,34 +1,40 @@
-.ice_segment {
+.ice_statement, .ice_inline {
   position: relative;
   display: inline-block;
   vertical-align: middle;
   border-radius: 3px;
   border: 1px solid #888;
+  white-space: pre;
+  font-family: monospace;
+  cursor: pointer;
   min-width: 20px;
   min-height: 20px;
-  overflow: show;
 }
-.ice_statement {
-  white-space: nowrap;
+.ice_block {
+  position: relative;
+  display: block;
+  border-radius: 3px;
+  border: 1px solid #888;
+  min-height: 30px;
+  margin-left: 10px;
+}
+.ice_block_drop_target, .ice_drop_target {
+  position: absolute;
+  left: 0;
+  height: 10px;
+  width: 20px;
+  /*border: 1px solid #888;*/
+  /*background-color: rgba(0, 0, 0, 0.3);*/
 }
 .ice_drop_target {
-  position: absolute;
   bottom: -5;
-  left: 0;
-  height: 10px;
-  width: 20px;
-  border: 1px solid #888;
 }
 .ice_block_drop_target {
-  position: absolute;
-  top: -5;
-  left: 0;
-  height: 10px;
-  width: 20px;
-  border: 1px solid #888;
+  top: -5
 }
 .highlight {
-  outline: 1px solid #FF0;
+  border: 1px solid #FF0;
+  background-color: #FF0;
 }
 .blockish {
   position: absolute;
@@ -46,15 +52,21 @@
   overflow: auto;
 }
 
+.ice_workspace > .ice_block {
+  margin-left: 0px;
+}
+
 #editor {
-  height: 200px;
-  width: 500px;
+  height: 300px;
+  width: 600px;
   position: relative;
 }
 
 .ice_input {
   height: 20px;
   width: 20px;
+  border: none;
+  font-family: monospace;
 }
 
 .ice_segment ~ .ice_input {

@@ -1,9 +1,8 @@
 moveSegment = (mobile, target) ->
-  console.log 'moving', mobile, 'to', target
+  console.log target.droppable
   # If the mobile element is coming from another parent, detatch it
   if mobile.parent?
     if mobile.parent.type == 'block'
-      console.log 'removing block element from', mobile.parent.children.indexOf mobile
       mobile.parent.children.splice(mobile.parent.children.indexOf(mobile), 1)
       mobile.parent.droppable = true
     else
@@ -45,13 +44,16 @@ class IceSegment
   clone: ->
     copy = this._reconstruct()
     copy.type = @type
-    copy.parent = @parent
     copy.children = []
     for child in @children
       if typeof child == 'string'
         copy.children.push child
       else
-        copy.children.push child.clone()
+        child_clone = child.clone()
+        child_clone.parent = copy
+        copy.children.push child_clone
+    if this.droppable?
+      copy.droppable = this.droppable
     return copy
   
   templateify: ->
@@ -159,10 +161,8 @@ class IceBlockSegment extends IceSegment
   _reconstruct: -> new IceBlockSegment()
 
   stringify: ->
-    string = ''
-    for child in @children
-      string += child.stringify().replace(/n/g, '\n  ') + '\n'
-    return string
+    console.log 'Blockifying', @children
+    '  ' + (child.stringify() for child in @children).join('\n').replace(/\n/g, '\n  ')
   
   blockify: ->
     segment = this
@@ -275,9 +275,81 @@ class IceEditor
   getValue: ->
     return @root.stringify()
 
+defrost = (frosting, args) ->
+  statement = new IceStatement([])
+  
+  # Parse
+  current = ''
+  escaped = false
+  for char in frosting
+    if escaped
+      if char == '%'
+        current += '%'
+      else if char == 'w'
+        # Finish up the current segment
+        statement.children.push new IceStaticSegment(current)
 
+        # Make the block
+        argument = args.shift()
+        clone = if argument? then argument.clone() else new IceBlockSegment()
+        clone.parent = statement
+        statement.children.push clone
 
+        # Start a new segment
+        current = ''
+      else
+        # Finish up the current element
+        statement.children.push new IceStaticSegment(current)
+        
+        # Make the inline socket
+        inline = new IceInlineSegment(-> true)
+        argument = args.shift()
+        if argument?
+          argument.parent = inline
+          inline.children.push argument
+          argument.droppable = false
+          inline.droppable = false
+        statement.children.push inline
+
+        # Start a new segment
+        current = ''
+      escaped = false
+    else
+      if char == '%'
+        escaped = true
+      else
+        current += char
+
+  statement.children.push new IceStaticSegment(current)
+
+  return statement
+
+# CoffeeScript blockifier... shouldn't be here by rights
+
+blockify = (node) ->
+  if node.constructor.name == 'Block'
+    new_block = new IceBlockSegment()
+    for expr in node.expressions
+      child = blockify expr
+      child.parent = new_block
+      new_block.children.push child
+    return new_block
+  else if node.constructor.name == 'Value'
+    return blockify node.base
+  else if node.constructor.name == 'Literal'
+    return new IceStatement([new IceStaticSegment node.value])
+  else if node.constructor.name == 'Call'
+    return defrost '%v(' + ['%v' for arg in node.args].join(',') + ')', [blockify node.variable].concat blockify arg for arg in node.args
+  else if node.constructor.name == 'Code'
+    return defrost '(' + ['%v' for param in node.params].join(',') + ') ->\n%w', (blockify param for param in node.params).concat [blockify node.body]
+
+window.blockify = blockify
+
+# Testing
 window.onload = ->
-  addition = new IceStatement([new IceStaticSegment('('), new IceInlineSegment(-> true), new IceStaticSegment('+'), new IceInlineSegment(-> true), new IceStaticSegment(')')])
-  editor = new IceEditor(document.getElementById('editor'), [addition])
+  addition = defrost('(%v + %v)', [null, null])
+  multiplication = defrost("(%v * %v)", [null, null])
+  nodie = blockify(CoffeeScript.nodes "->\n  a b").children[0]
+  nodie.parent = null
+  editor = new IceEditor(document.getElementById('editor'), [addition, multiplication, nodie])
   window.editor = editor
