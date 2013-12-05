@@ -196,6 +196,10 @@ div#dialog_title {
   border-bottom: 1px solid #000;
 }
 
+div.ice_palette_template_wrapper {
+  padding: 5px;
+}
+
 input#name {
   margin-left: 20px;
   border: 1px solid #000;

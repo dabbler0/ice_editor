@@ -9,7 +9,8 @@
 (function() {
   var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceSegment, IceStatement, IceStaticSegment, blockify, defrost, moveSegment,
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   moveSegment = function(mobile, target) {
     if (mobile.parent != null) {
@@ -73,7 +74,7 @@
       _ref = this.children;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
-        if (typeof child === 'string') {
+        if (typeof child === 'string' || child.constructor.name === 'String') {
           copy.children.push(child);
         } else {
           child_clone = child.clone();
@@ -101,7 +102,7 @@
         return block.unbind('dragstart');
       });
       return block.on('dragstop', function() {
-        if (segment.parent != null) {
+        if ((segment.parent != null) || block.parent().length === 0) {
           new_block.show();
           return block.unbind('dragstop');
         }
@@ -134,7 +135,7 @@
       _ref = this.children;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
-        if (typeof child === 'string') {
+        if (typeof child === 'string' || child.constructor.name === 'String') {
           block.append(child);
         } else {
           block.append(child.blockify());
@@ -164,7 +165,7 @@
     };
 
     IceInlineSegment.prototype.blockify = function() {
-      var block, child, input, segment, _i, _len, _ref;
+      var big_wrapper, block, checkHeight, child, input, segment, _i, _len, _ref;
       segment = this;
       block = $('<span>');
       block.addClass('ice_segment');
@@ -172,7 +173,7 @@
       _ref = this.children;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
-        if (typeof child !== 'string') {
+        if (typeof child !== 'string' && child.constructor.name !== 'String') {
           block.append(child.blockify());
         }
       }
@@ -188,6 +189,25 @@
         }
       });
       block.append(input);
+      big_wrapper = false;
+      checkHeight = function() {
+        return setTimeout((function() {
+          var ghost_element, wrapper_div;
+          if (block.height() > 100 && !big_wrapper) {
+            ghost_element = $('<div>');
+            block.after(ghost_element);
+            wrapper_div = $('<div>').addClass('ice_big_inline_wrapper');
+            wrapper_div.append(block);
+            ghost_element.replaceWith(wrapper_div);
+            return big_wrapper = true;
+          } else if (block.height() < 100 && big_wrapper) {
+            block.parent().replaceWith(block);
+            return big_wrapper = false;
+          }
+        }), 0);
+      };
+      $(document.body).mouseup(checkHeight).keydown(checkHeight);
+      setTimeout(checkHeight, 0);
       input.autoGrowInput({
         comfortZone: 0,
         minWidth: 20,
@@ -302,8 +322,9 @@
   IceStatement = (function(_super) {
     __extends(IceStatement, _super);
 
-    function IceStatement(template) {
+    function IceStatement(template, type) {
       var child, _i, _len;
+      console.log('Recieved syntax type', type);
       this.parent = null;
       this.children = [];
       for (_i = 0, _len = template.length; _i < _len; _i++) {
@@ -312,11 +333,12 @@
         child.parent = this;
       }
       this.type = 'statement';
+      this.syntax_type = type;
       this.droppable = true;
     }
 
     IceStatement.prototype._reconstruct = function() {
-      return new IceStatement([]);
+      return new IceStatement([], this.syntax_type);
     };
 
     IceStatement.prototype.blockify = function() {
@@ -325,6 +347,7 @@
       block = $('<div>');
       block.addClass('ice_segment');
       block.addClass('ice_' + this.type);
+      block.addClass('ice_syntax_type_' + (this.syntax_type != null ? this.syntax_type : 'cv'));
       _ref = this.children;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
@@ -371,7 +394,13 @@
       block.draggable({
         appendTo: 'body',
         helper: 'clone',
-        revert: 'invalid'
+        revert: 'invalid',
+        start: function(event, ui) {
+          return ui.helper.addClass('ui-helper');
+        },
+        end: function(event, ui) {
+          return ui.helper.removeClass('ui-helper');
+        }
       });
       return block;
     };
@@ -445,7 +474,6 @@
         } else if (event.keyCode === 8 && this.value.length === 0) {
           prev = block.parent().prev().find('.ice_input');
           focal = prev.length > 0 ? prev : block.parent().parent().siblings().filter('.ice_handwritten .ice_input').first();
-          console.log('found', segment, 'at index', segment.parent.children.indexOf(segment));
           segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
           if (segment.parent._trembling && segment.parent.children.length === 0) {
             segment.parent.parent.children.pop();
@@ -459,7 +487,7 @@
           if (prev == null) {
             return false;
           }
-          segment.parent.children.splice(segment.parent.children.indexOf(segment, 1));
+          segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
           p_prev = block.parent().prev();
           if (prev.children[prev.children.length - 1].type === 'block') {
             prev.children[prev.children.length - 1].children.push(segment);
@@ -498,13 +526,28 @@
 
   IceEditor = (function() {
     function IceEditor(element, templates, blockifier) {
-      var template, _i, _len;
+      var block, blocks, details, section, template, title, _i, _len;
       this.element = $(element);
       this.palette = $('<div>');
       this.palette.addClass('ice_palette blockish');
-      for (_i = 0, _len = templates.length; _i < _len; _i++) {
-        template = templates[_i];
-        this.palette.append($('<div>').append(template.templateify()));
+      for (title in templates) {
+        section = templates[title];
+        details = $('<details>').addClass('ice_palette_detail');
+        details.append($('<summary>').text(title));
+        blocks = (function() {
+          var _i, _len, _results;
+          _results = [];
+          for (_i = 0, _len = section.length; _i < _len; _i++) {
+            template = section[_i];
+            _results.push(defrost(template, []));
+          }
+          return _results;
+        })();
+        for (_i = 0, _len = blocks.length; _i < _len; _i++) {
+          block = blocks[_i];
+          details.append($('<div>').addClass('ice_palette_template_wrapper').append(block.templateify()));
+        }
+        this.palette.append(details);
       }
       this.palette.droppable({
         greedy: true,
@@ -515,6 +558,8 @@
         },
         drop: function(event, ui) {
           moveSegment(ui.draggable.data('ice_tree'), null);
+          ui.draggable.detach();
+          ui.draggable.trigger('dragstop');
           return ui.draggable.remove();
         }
       });
@@ -533,7 +578,6 @@
     IceEditor.prototype.setValue = function(value) {
       this.workspace.html('');
       this.root = this.blockifier(value);
-      console.log(this.root);
       return this.workspace.append(this.root.blockify());
     };
 
@@ -543,7 +587,8 @@
 
   defrost = function(frosting, args) {
     var argument, char, clone, current, escaped, inline, statement, _i, _len;
-    statement = new IceStatement([]);
+    statement = new IceStatement([], frosting.slice(0, +(frosting.indexOf(':') - 1) + 1 || 9e9));
+    frosting = frosting.slice(frosting.indexOf(':') + 1);
     current = '';
     escaped = false;
     for (_i = 0, _len = frosting.length; _i < _len; _i++) {
@@ -560,9 +605,14 @@
           current = '';
         } else {
           statement.children.push(new IceStaticSegment(current));
-          inline = new IceInlineSegment(function() {
-            return true;
-          });
+          inline = null;
+          (function() {
+            var _char;
+            _char = char;
+            return inline = new IceInlineSegment(function(segment) {
+              return (segment == null) || (segment.syntax_type == null) || __indexOf.call(segment.syntax_type, _char) >= 0;
+            });
+          })();
           argument = args.shift();
           if (argument != null) {
             if (typeof argument === 'string') {
@@ -592,8 +642,7 @@
   };
 
   blockify = function(node) {
-    var arg, child, expr, new_block, param, _i, _len, _ref;
-    console.log(node);
+    var arg, child, expr, new_block, object, param, property, _i, _j, _len, _len1, _ref, _ref1;
     if (node.constructor.name === 'Block') {
       new_block = new IceBlockSegment();
       _ref = node.expressions;
@@ -605,11 +654,17 @@
       }
       return new_block;
     } else if (node.constructor.name === 'Value') {
-      return blockify(node.base);
+      if (node.properties.length > 0 && node.properties[0].constructor.name === 'Access') {
+        return defrost('v:%v.%v', [blockify(node.base), blockify(node.properties[0].name)]);
+      } else if (node.properties.length > 0 && node.properties[0].constructor.name === 'Index') {
+        return defrost('v:%v[%v]', [blockify(node.base), blockify(node.properties[0].index)]);
+      } else {
+        return blockify(node.base);
+      }
     } else if (node.constructor.name === 'Literal') {
       return node.value;
     } else if (node.constructor.name === 'Call') {
-      return defrost('%v(' + [
+      return defrost('cv:%v(' + [
         (function() {
           var _j, _len1, _ref1, _results;
           _ref1 = node.args;
@@ -631,7 +686,7 @@
         return _results;
       })()));
     } else if (node.constructor.name === 'Code') {
-      return defrost('(' + ((function() {
+      return defrost('v:(' + ((function() {
         var _j, _len1, _ref1, _results;
         _ref1 = node.params;
         _results = [];
@@ -653,28 +708,68 @@
     } else if (node.constructor.name === 'Param') {
       return blockify(node.name);
     } else if (node.constructor.name === 'Assign') {
-      return defrost('%v = %v', [blockify(node.variable), blockify(node.value)]);
+      if ((node.context != null) && node.context === 'object') {
+        return defrost('c:%v: %v', [blockify(node.variable), blockify(node.value)]);
+      } else {
+        return defrost('c:%v = %v', [blockify(node.variable), blockify(node.value)]);
+      }
     } else if (node.constructor.name === 'For') {
-      return defrost('for %v%w', [blockify(node.source), blockify(node.body)]);
+      if (node.index) {
+        return defrost('ck:for %v, %v in %v%w', [blockify(node.name), blockify(node.index), blockify(node.source), blockify(node.body)]);
+      }
+      if (node.name) {
+        return defrost('ck:for %v in %v%w', [blockify(node.name), blockify(node.source), blockify(node.body)]);
+      } else {
+        return defrost('ck:for %v%w', [blockify(node.source), blockify(node.body)]);
+      }
     } else if (node.constructor.name === 'Range') {
-      return defrost('[%v..%v]', [blockify(node.from), blockify(node.to)]);
+      return defrost('v:[%v..%v]', [blockify(node.from), blockify(node.to)]);
     } else if (node.constructor.name === 'Parens') {
-      return defrost('(%v)', [blockify(node.body.unwrap())]);
+      return defrost('cv:(%v)', [blockify(node.body.unwrap())]);
     } else if (node.constructor.name === 'Op') {
       if (node.second) {
-        return defrost("%v " + node.operator + " %v", [blockify(node.first), blockify(node.second)]);
+        return defrost("v:%v " + node.operator + " %v", [blockify(node.first), blockify(node.second)]);
       } else {
-        return defrost("" + node.operator + " %v", [blockify(node.first)]);
+        return defrost("v:" + node.operator + " %v", [blockify(node.first)]);
       }
     } else if (node.constructor.name === 'If') {
-      console.log('Parsing if', node);
       if (node.elseBody != null) {
-        console.log('Parsing with an elseBody');
-        return defrost('if %v%w\nelse%w', [blockify(node.condition), blockify(node.body), blockify(node.elseBody)]);
+        return defrost('ck:if %v%w\nelse%w', [blockify(node.condition), blockify(node.body), blockify(node.elseBody)]);
       } else {
-        console.log('Parsing with no elseBody');
-        return defrost('if %v%w', [blockify(node.condition), blockify(node.body)]);
+        return defrost('ck:if %v%w', [blockify(node.condition), blockify(node.body)]);
       }
+    } else if (node.constructor.name === 'Arr') {
+      return defrost('v:[' + ((function() {
+        var _j, _len1, _ref1, _results;
+        _ref1 = node.objects;
+        _results = [];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          object = _ref1[_j];
+          _results.push('%v');
+        }
+        return _results;
+      })()).join(',') + ']', (function() {
+        var _j, _len1, _ref1, _results;
+        _ref1 = node.objects;
+        _results = [];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          object = _ref1[_j];
+          _results.push(blockify(object));
+        }
+        return _results;
+      })());
+    } else if (node.constructor.name === 'Obj') {
+      new_block = new IceBlockSegment();
+      _ref1 = node.properties;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        property = _ref1[_j];
+        new_block.children.push(blockify(property));
+      }
+      return defrost('v:{%w\n}', [new_block]);
+    } else if (node.constructor.name === 'Return') {
+      return defrost('cr:return %v', [blockify(node.expression)]);
+    } else if (node.constructor.name === 'Bool') {
+      return node.val;
     }
   };
 
