@@ -243,7 +243,6 @@ class IceBlockSegment extends IceSegment
 
 class IceStatement extends IceSegment
   constructor: (template, type) ->
-    console.log 'Recieved syntax type', type
     @parent = null
 
     # Clone the template for this children array
@@ -504,7 +503,6 @@ class IceEditor
 
 
 defrost = (frosting, args) ->
-  #console.log frosting, frosting[..frosting.indexOf(':')-1]
   statement = new IceStatement([], frosting[..frosting.indexOf(':')-1])
 
   frosting = frosting[frosting.indexOf(':')+1..]

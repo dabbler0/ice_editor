@@ -84,6 +84,7 @@
   width: 20px;
   border: none;
   font-family: monospace;
+  border-radius: 3px;
 }
 
 .ice_segment ~ .ice_input {

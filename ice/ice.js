@@ -324,7 +324,6 @@
 
     function IceStatement(template, type) {
       var child, _i, _len;
-      console.log('Recieved syntax type', type);
       this.parent = null;
       this.children = [];
       for (_i = 0, _len = template.length; _i < _len; _i++) {
