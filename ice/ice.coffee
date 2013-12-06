@@ -582,7 +582,7 @@ blockify = (node) ->
   else if node.constructor.name == 'Literal'
     return node.value
   else if node.constructor.name == 'Call'
-    return defrost 'cv:%v(' + ['%v' for arg in node.args].join(',') + ')', [blockify node.variable].concat(blockify(arg) for arg in node.args)
+    return defrost 'cv:%v(' + ('%v' for arg in node.args).join(',') + ')', [blockify node.variable].concat(blockify(arg) for arg in node.args)
   else if node.constructor.name == 'Code'
     return defrost 'v:(' + ('%v' for param in node.params).join(',') + ') ->%w', (blockify(param) for param in node.params).concat [blockify node.body]
   else if node.constructor.name == 'Param'

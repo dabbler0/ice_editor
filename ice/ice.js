@@ -663,18 +663,16 @@
     } else if (node.constructor.name === 'Literal') {
       return node.value;
     } else if (node.constructor.name === 'Call') {
-      return defrost('cv:%v(' + [
-        (function() {
-          var _j, _len1, _ref1, _results;
-          _ref1 = node.args;
-          _results = [];
-          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-            arg = _ref1[_j];
-            _results.push('%v');
-          }
-          return _results;
-        })()
-      ].join(',') + ')', [blockify(node.variable)].concat((function() {
+      return defrost('cv:%v(' + ((function() {
+        var _j, _len1, _ref1, _results;
+        _ref1 = node.args;
+        _results = [];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          arg = _ref1[_j];
+          _results.push('%v');
+        }
+        return _results;
+      })()).join(',') + ')', [blockify(node.variable)].concat((function() {
         var _j, _len1, _ref1, _results;
         _ref1 = node.args;
         _results = [];
