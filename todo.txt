@@ -3,4 +3,5 @@ The Big Todo List
  3. Auto reblock on text edit
 
 The Little Todo List
- 3. Preferred operator macros (e.g. 'not' and 'or')
+ 1. Auto reblock on text edit (
+ 2. Preferred operator macros (e.g. 'not' and 'or')

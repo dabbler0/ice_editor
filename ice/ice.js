@@ -713,6 +713,10 @@
         return defrost('c:%v = %v', [blockify(node.variable), blockify(node.value)]);
       }
     } else if (node.constructor.name === 'For') {
+      console.log(node);
+      if (node.object) {
+        return defrost('ck: for %v of %v%w', [blockify(node.index), blockify(node.source), blockify(node.body)]);
+      }
       if (node.index) {
         return defrost('ck:for %v, %v in %v%w', [blockify(node.name), blockify(node.index), blockify(node.source), blockify(node.body)]);
       }
@@ -728,6 +732,8 @@
     } else if (node.constructor.name === 'Op') {
       if (node.second) {
         return defrost("v:%v " + node.operator + " %v", [blockify(node.first), blockify(node.second)]);
+      } else if (node.flip) {
+        return defrost("v:%v " + node.operator, [blockify(node.first)]);
       } else {
         return defrost("v:" + node.operator + " %v", [blockify(node.first)]);
       }
