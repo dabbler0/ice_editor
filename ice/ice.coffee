@@ -610,7 +610,7 @@ blockify = (node) ->
     if node.second
       return defrost "v:%v #{node.operator} %v", [blockify(node.first), blockify(node.second)]
     else if node.flip
-      return defrost "v:%v #{node.operator}", [blockify(node.first)]
+      return defrost "v:%v#{node.operator}", [blockify(node.first)]
     else
       return defrost "v:#{node.operator} %v", [blockify(node.first)]
   else if node.constructor.name == 'If'
