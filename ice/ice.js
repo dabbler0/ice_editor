@@ -713,7 +713,7 @@
     } else if (node.constructor.name === 'For') {
       console.log(node);
       if (node.object) {
-        return defrost('ck: for %v of %v%w', [blockify(node.index), blockify(node.source), blockify(node.body)]);
+        return defrost('ck:for %v of %v%w', [blockify(node.index), blockify(node.source), blockify(node.body)]);
       }
       if (node.index) {
         return defrost('ck:for %v, %v in %v%w', [blockify(node.name), blockify(node.index), blockify(node.source), blockify(node.body)]);
