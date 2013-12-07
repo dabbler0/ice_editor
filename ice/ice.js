@@ -7,12 +7,22 @@
 
 
 (function() {
-  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceSegment, IceStatement, IceStaticSegment, blockify, defrost, moveSegment,
+  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceSegment, IceStatement, IceStaticSegment, blockify, corners, defrost, genPosData, moveSegment, overlap,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   moveSegment = function(mobile, target) {
+    var child, last_child, _i, _len;
+    if (mobile instanceof Array) {
+      last_child = target;
+      for (_i = 0, _len = mobile.length; _i < _len; _i++) {
+        child = mobile[_i];
+        moveSegment(child, last_child);
+        last_child = child;
+      }
+      return;
+    }
     if (mobile.parent != null) {
       if (mobile.parent.type === 'block') {
         mobile.parent.children.splice(mobile.parent.children.indexOf(mobile), 1);
@@ -276,9 +286,92 @@
         if (typeof child === 'string') {
           block.append(child);
         } else {
-          block.append($('<div>').append(child.blockify()));
+          block.append($('<div>').addClass('ice_block_command_wrapper').append(child.blockify()));
         }
       }
+      block.mousedown(function(origin_event) {
+        var existentWrapper, selecting, selector, _this;
+        console.log('recieved mousedown event.');
+        if (origin_event.target === this || $(origin_event.target).parent().is(this) || $(origin_event.target).parent().hasClass('ice_selected_element_wrapper')) {
+          console.log('acting on mousedown event.');
+          existentWrapper = $('.ice_selected_element_wrapper');
+          if (existentWrapper.parent().hasClass('ice_block_command_wrapper')) {
+            existentWrapper.parent().replaceWith(existentWrapper.children());
+          } else {
+            existentWrapper.replaceWith(existentWrapper.children());
+          }
+          $('.ice_statement').css('outline', '').data('overlapPos', null).draggable('enable');
+          console.log('Removed existent wrapper.');
+          selector = $('<div>');
+          selector.addClass('ice_selector');
+          selector.data('overlapRerender', true);
+          block.append(selector);
+          corners(selector, origin_event, origin_event);
+          selecting = true;
+          $(document.body).mouseup(function(origin_event) {
+            var children, selected_elements, selected_parents, wrapper_div;
+            if (selecting) {
+              children = _this.children();
+              selected_elements = [];
+              selected_parents = $('');
+              children.each(function() {
+                var true_block;
+                true_block = $(this).children();
+                if (true_block.hasClass('ice_statement')) {
+                  if (overlap(selector, true_block)) {
+                    true_block.draggable('disable');
+                    console.log('adding', this, 'to selected parents');
+                    selected_parents = selected_parents.add(this);
+                    return selected_elements.push(true_block.data('ice_tree'));
+                  } else {
+                    return true_block.css('outline', '');
+                  }
+                }
+              });
+              selected_parents.wrapAll('<div>');
+              wrapper_div = selected_parents.parent();
+              wrapper_div.addClass('ice_selected_element_wrapper');
+              wrapper_div.draggable({
+                appendTo: 'body',
+                helper: 'clone',
+                revert: 'invalid',
+                handle: '.ice_statement',
+                start: function(event, ui) {
+                  console.log('dragging wrapper div');
+                  return ui.helper.addClass('ui-helper');
+                },
+                end: function(event, ui) {
+                  return ui.helper.removeClass('ui-helper');
+                }
+              });
+              wrapper_div.data('ice_tree', selected_elements);
+              selector.remove();
+              selecting = false;
+              return false;
+            }
+          });
+          _this = $(this);
+          $(document.body).mousemove(function(event) {
+            var children;
+            if (selecting) {
+              corners(selector, origin_event, event);
+              children = _this.children();
+              return children.each(function() {
+                var true_block;
+                true_block = $(this).children();
+                if (true_block.hasClass('ice_statement')) {
+                  if (overlap(selector, true_block)) {
+                    return true_block.css('outline', '2px solid #FF0');
+                  } else {
+                    return true_block.css('outline', '');
+                  }
+                }
+              });
+            }
+          });
+          return false;
+        }
+      });
       drop_target = $('<div>');
       drop_target.addClass('ice_block_drop_target');
       drop_target.droppable({
@@ -295,7 +388,7 @@
             if ((tree.parent != null) && tree.parent.type === 'block') {
               ui.draggable.parent().detach();
             }
-            block.prepend($('<div>').append(ui.draggable));
+            block.prepend($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
             return moveSegment(tree, segment);
           }
         }
@@ -307,7 +400,7 @@
           segment.children.unshift(new_block);
           new_block.parent = segment;
           new_block_el = new_block.blockify();
-          block.prepend($("<div>").append(new_block_el));
+          block.prepend($('<div>').addClass('ice_block_command_wrapper').append(new_block_el));
           return new_block_el.find('.ice_input').focus();
         }
       });
@@ -373,7 +466,7 @@
             if ((tree.parent != null) && tree.parent.type === 'block') {
               ui.draggable.parent().detach();
             }
-            block.parent().after($('<div>').append(ui.draggable));
+            block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
             return moveSegment(tree, segment);
           }
         }
@@ -385,7 +478,7 @@
           segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_block);
           new_block.parent = segment.parent;
           new_block_el = new_block.blockify();
-          block.parent().after($("<div>").append(new_block_el));
+          block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(new_block_el));
           return new_block_el.find('.ice_input').focus();
         }
       });
@@ -435,7 +528,7 @@
         drop: function(event, ui) {
           if (event.target === this) {
             moveSegment(ui.draggable.data('ice_tree'), segment);
-            return block.parent().after($('<div>').append(ui.draggable));
+            return block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
           }
         }
       });
@@ -446,7 +539,7 @@
           segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_block);
           new_block.parent = segment.parent;
           new_block_el = new_block.blockify();
-          block.parent().after($("<div>").append(new_block_el));
+          block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(new_block_el));
           return new_block_el.find('.ice_input').focus();
         }
       });
@@ -468,7 +561,7 @@
           segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_segment);
           new_segment.parent = segment.parent;
           new_block = new_segment.blockify();
-          block.parent().after($("<div>").append(new_block));
+          block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(new_block));
           return new_block.find('.ice_input').focus();
         } else if (event.keyCode === 8 && this.value.length === 0) {
           prev = block.parent().prev().find('.ice_input');
@@ -492,7 +585,7 @@
             prev.children[prev.children.length - 1].children.push(segment);
             segment.parent = prev.children[prev.children.length - 1];
             block.parent().detach();
-            p_prev.children().first().find('.ice_block').last().append($("<div>").append(block));
+            p_prev.children().first().find('.ice_block').last().append($('<div>').addClass('ice_block_command_wrapper').append(block));
           } else {
             new_parent = new IceBlockSegment();
             new_parent._trembling = true;
@@ -500,7 +593,7 @@
             new_block = new_parent.blockify();
             block.parent().detach();
             p_prev.children().first().append(new_block);
-            new_block.append($("<div>").append(block));
+            new_block.append($('<div>').addClass('ice_block_command_wrapper').append(block));
             new_block.data('trembling', true);
             prev.children.push(new_parent);
             new_parent.children.push(segment);
@@ -522,6 +615,48 @@
     return IceHandwrittenSegment;
 
   })(IceStatement);
+
+  corners = function(element, a, b) {
+    var x, y;
+    x = [a.pageX, b.pageX];
+    y = [a.pageY, b.pageY];
+    x.sort(function(a, b) {
+      return a - b;
+    });
+    y.sort(function(a, b) {
+      return a - b;
+    });
+    return element.css({
+      left: x[0],
+      top: y[0],
+      width: x[1] - x[0],
+      height: y[1] - y[0]
+    });
+  };
+
+  genPosData = function(el) {
+    var pos;
+    pos = el.data('overlapPos');
+    if ((el.data('overlapRerender') == null) && (el.data('overlapPos') != null)) {
+      return pos;
+    } else {
+      pos = {};
+      pos.head = el.offset();
+      pos.tail = {
+        left: pos.head.left + el.width(),
+        top: pos.head.top + el.height()
+      };
+      el.data('overlapPos', pos);
+      return pos;
+    }
+  };
+
+  overlap = function(a, b) {
+    var a_pos, b_pos;
+    a_pos = genPosData(a);
+    b_pos = genPosData(b);
+    return a_pos.head.left < b_pos.tail.left && b_pos.head.left < a_pos.tail.left && a_pos.head.top < b_pos.tail.top && b_pos.head.top < a_pos.tail.top;
+  };
 
   IceEditor = (function() {
     function IceEditor(element, templates, blockifier) {
@@ -566,7 +701,7 @@
       this.workspace.addClass('ice_workspace blockish');
       this.root = new IceBlockSegment();
       this.workspace.append(this.root.blockify());
-      this.element.append(this.palette).append(this.workspace);
+      this.element.append(this.palette).append(this.workspace).append(this.selector);
       this.blockifier = blockifier;
     }
 

@@ -4,6 +4,14 @@
   MIT License
 ###
 moveSegment = (mobile, target) ->
+  # Move a selection of things
+  if mobile instanceof Array
+    last_child = target
+    for child in mobile
+      moveSegment child, last_child
+      last_child = child
+    return
+
   # If the mobile element is coming from another parent, detatch it
   if mobile.parent?
     if mobile.parent.type == 'block'
@@ -207,7 +215,85 @@ class IceBlockSegment extends IceSegment
       if typeof child == 'string'
         block.append child
       else
-        block.append $('<div>').append child.blockify()
+        block.append $('<div>').addClass('ice_block_command_wrapper').append child.blockify()
+    
+    # Blocks allow for the selector element
+    block.mousedown (origin_event) ->
+      console.log 'recieved mousedown event.'
+
+      if origin_event.target == this or $(origin_event.target).parent().is(this) or $(origin_event.target).parent().hasClass('ice_selected_element_wrapper')
+        console.log 'acting on mousedown event.'
+
+        # Tear down the existent selection
+        existentWrapper = $('.ice_selected_element_wrapper')
+        if existentWrapper.parent().hasClass 'ice_block_command_wrapper'
+          existentWrapper.parent().replaceWith existentWrapper.children()
+        else
+          existentWrapper.replaceWith existentWrapper.children()
+
+        $('.ice_statement').css('outline', '').data('overlapPos', null).draggable 'enable'
+
+        console.log 'Removed existent wrapper.'
+
+        # Construct the selector element
+        selector = $ '<div>'
+        selector.addClass 'ice_selector'
+        selector.data('overlapRerender', true)
+        block.append selector
+        corners selector, origin_event, origin_event
+
+        selecting = true
+
+        $(document.body).mouseup (origin_event) ->
+          if selecting
+            children = _this.children()
+            selected_elements = []
+            selected_parents = $('')
+            children.each(->
+              true_block = $(this).children()
+              if true_block.hasClass 'ice_statement'
+                if overlap selector, true_block
+                  true_block.draggable 'disable'
+                  console.log 'adding', this, 'to selected parents'
+                  selected_parents = selected_parents.add this
+                  selected_elements.push true_block.data 'ice_tree'
+                else
+                  true_block.css('outline', ''))
+            
+            selected_parents.wrapAll '<div>'
+            wrapper_div = selected_parents.parent()
+            wrapper_div.addClass 'ice_selected_element_wrapper'
+            wrapper_div.draggable
+              appendTo: 'body'
+              helper: 'clone'
+              revert: 'invalid'
+              handle: '.ice_statement'
+              start: (event, ui) ->
+                console.log 'dragging wrapper div'
+                ui.helper.addClass 'ui-helper'
+              end: (event, ui) ->
+                ui.helper.removeClass 'ui-helper'
+            wrapper_div.data 'ice_tree', selected_elements
+
+            selector.remove()
+            selecting = false
+            return false
+        
+        _this = $(this)
+        $(document.body).mousemove (event) ->
+          if selecting
+            corners selector, origin_event, event
+            children = _this.children()
+            children.each(->
+              true_block = $(this).children()
+              if true_block.hasClass 'ice_statement'
+                if overlap selector, true_block
+                  true_block.css('outline', '2px solid #FF0')
+                else
+                  true_block.css('outline', ''))
+
+        return false
+
 
     # Create the drop target
     drop_target = $ '<div>'
@@ -224,7 +310,7 @@ class IceBlockSegment extends IceSegment
           tree = ui.draggable.data('ice_tree')
           if tree.parent? and tree.parent.type == 'block'
             ui.draggable.parent().detach()
-          block.prepend $('<div>').append ui.draggable
+          block.prepend $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
           moveSegment tree, segment
 
     drop_target.click ->
@@ -233,7 +319,7 @@ class IceBlockSegment extends IceSegment
         segment.children.unshift new_block
         new_block.parent = segment
         new_block_el = new_block.blockify()
-        block.prepend $("<div>").append new_block_el
+        block.prepend $('<div>').addClass('ice_block_command_wrapper').append new_block_el
         new_block_el.find('.ice_input').focus()
 
     # Append it to the block
@@ -289,7 +375,7 @@ class IceStatement extends IceSegment
           tree = ui.draggable.data('ice_tree')
           if tree.parent? and tree.parent.type == 'block'
             ui.draggable.parent().detach()
-          block.parent().after $('<div>').append ui.draggable
+          block.parent().after $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
           moveSegment tree, segment
     
     drop_target.click ->
@@ -298,7 +384,7 @@ class IceStatement extends IceSegment
         segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_block)
         new_block.parent = segment.parent
         new_block_el = new_block.blockify()
-        block.parent().after $("<div>").append new_block_el
+        block.parent().after $('<div>').addClass('ice_block_command_wrapper').append new_block_el
         new_block_el.find('.ice_input').focus()
     
     # Append it to the block
@@ -344,7 +430,7 @@ class IceHandwrittenSegment extends IceStatement
       drop: (event, ui) ->
         if event.target == this
           moveSegment ui.draggable.data('ice_tree'), segment
-          block.parent().after $('<div>').append ui.draggable
+          block.parent().after $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
     
     drop_target.click ->
       if segment.droppable
@@ -352,7 +438,7 @@ class IceHandwrittenSegment extends IceStatement
         segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_block)
         new_block.parent = segment.parent
         new_block_el = new_block.blockify()
-        block.parent().after $("<div>").append new_block_el
+        block.parent().after $('<div>').addClass('ice_block_command_wrapper').append new_block_el
         new_block_el.find('.ice_input').focus()
     
     # Append it to the block
@@ -384,7 +470,7 @@ class IceHandwrittenSegment extends IceStatement
         
         # Append it and focus it
         new_block = new_segment.blockify()
-        block.parent().after $("<div>").append new_block
+        block.parent().after $('<div>').addClass('ice_block_command_wrapper').append new_block
         new_block.find('.ice_input').focus()
 
       else if event.keyCode == 8 and this.value.length == 0
@@ -419,7 +505,7 @@ class IceHandwrittenSegment extends IceStatement
           prev.children[prev.children.length - 1].children.push segment
           segment.parent = prev.children[prev.children.length - 1]
           block.parent().detach()
-          p_prev.children().first().find('.ice_block').last().append $("<div>").append block
+          p_prev.children().first().find('.ice_block').last().append $('<div>').addClass('ice_block_command_wrapper').append block
         else
           # Otherwise, make one
           new_parent = new IceBlockSegment()
@@ -430,7 +516,7 @@ class IceHandwrittenSegment extends IceStatement
           new_block = new_parent.blockify()
           block.parent().detach()
           p_prev.children().first().append new_block
-          new_block.append $("<div>").append block
+          new_block.append $('<div>').addClass('ice_block_command_wrapper').append block
 
           # Set this for removal later if necessary
           new_block.data 'trembling', true
@@ -453,6 +539,37 @@ class IceHandwrittenSegment extends IceStatement
 
     return block
 
+corners = (element, a, b) ->
+  x = [a.pageX, b.pageX]
+  y = [a.pageY, b.pageY]
+  x.sort((a, b) -> a - b)
+  y.sort((a, b) -> a - b)
+  element.css
+    left: x[0]
+    top: y[0]
+    width: x[1] - x[0]
+    height: y[1] - y[0]
+
+genPosData  = (el) ->
+  pos = el.data('overlapPos')
+  if not el.data('overlapRerender')? and el.data('overlapPos')?
+    return pos
+  else
+    pos = {}
+    pos.head = el.offset()
+    pos.tail =
+        left: pos.head.left + el.width()
+        top: pos.head.top + el.height()
+    el.data 'overlapPos', pos
+    return pos
+
+
+overlap = (a, b) ->
+  a_pos = genPosData a
+  b_pos = genPosData b
+
+  # Overlap iff a corner is inside the other rectangle.
+  return a_pos.head.left < b_pos.tail.left and b_pos.head.left < a_pos.tail.left and a_pos.head.top < b_pos.tail.top and b_pos.head.top < a_pos.tail.top
 
 class IceEditor
   constructor: (element, templates, blockifier) ->
@@ -485,8 +602,9 @@ class IceEditor
     @root = new IceBlockSegment()
     @workspace.append @root.blockify()
 
+
     # Append them to the element
-    @element.append(@palette).append(@workspace)
+    @element.append(@palette).append(@workspace).append @selector
 
     @blockifier = blockifier
 
