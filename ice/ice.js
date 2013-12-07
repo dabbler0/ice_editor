@@ -38,7 +38,7 @@
         target.children.unshift(mobile);
         target.droppable = mobile.droppable = true;
         return mobile.parent = target;
-      } else if (target.type === 'statement') {
+      } else if (target.type === 'statement' && (target.parent != null)) {
         target.parent.children.splice(target.parent.children.indexOf(target) + 1, 0, mobile);
         target.droppable = mobile.droppable = true;
         return mobile.parent = target.parent;
@@ -711,7 +711,7 @@
       this.root = new IceBlockSegment();
       root_element = this.root.blockify();
       this.workspace.append(root_element);
-      bottom_div = $('<div>');
+      bottom_div = this.bottom_div = $('<div>');
       bottom_div.addClass('ice_root_bottom_div');
       root_element.append(bottom_div);
       _this = this;
@@ -745,9 +745,36 @@
     };
 
     IceEditor.prototype.setValue = function(value) {
+      var bottom_div, checkHeight, root_element, _this;
       this.workspace.html('');
       this.root = this.blockifier(value);
-      return this.workspace.append(this.root.blockify());
+      root_element = this.root.blockify();
+      this.workspace.append(root_element);
+      bottom_div = this.bottom_div = $('<div>');
+      bottom_div.addClass('ice_root_bottom_div');
+      root_element.append(bottom_div);
+      _this = this;
+      bottom_div.droppable({
+        greedy: true,
+        tolerance: 'pointer',
+        hoverClass: 'highlight',
+        accept: function(drop) {
+          return true;
+        },
+        drop: function(event, ui) {
+          moveSegment(ui.draggable.data('ice_tree'), _this.root.children.length > 0 ? _this.root.children[_this.root.children.length - 1] : _this.root);
+          return bottom_div.before($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
+        }
+      });
+      checkHeight = function() {
+        return setTimeout((function() {
+          var last_element, last_element_bottom_edge;
+          last_element = root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last();
+          last_element_bottom_edge = last_element.length > 0 ? last_element.offset().top + last_element.height() : 0;
+          return bottom_div.height(root_element.height() - last_element_bottom_edge);
+        }), 0);
+      };
+      return $(document.body).mouseup(checkHeight).keydown(checkHeight);
     };
 
     return IceEditor;
