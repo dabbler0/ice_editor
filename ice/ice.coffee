@@ -5,9 +5,9 @@
 ###
 moveSegment = (mobile, target) ->
   # Move a selection of things
-  if mobile instanceof Array
+  if mobile.is_selected_wrapper? and mobile.is_selected_wrapper
     last_child = target
-    for child in mobile
+    for child in mobile.elements
       moveSegment child, last_child
       last_child = child
     return
@@ -219,11 +219,8 @@ class IceBlockSegment extends IceSegment
     
     # Blocks allow for the selector element
     block.mousedown (origin_event) ->
-      console.log 'recieved mousedown event.'
-
-      if origin_event.target == this or $(origin_event.target).parent().is(this) or $(origin_event.target).parent().hasClass('ice_selected_element_wrapper')
-        console.log 'acting on mousedown event.'
-
+      target = $(origin_event.target)
+      if target.is(this) or (target.parent().is(this) and target.hasClass('ice_block_command_wrapper')) or target.parent().hasClass('ice_selected_element_wrapper') or target.hasClass('ice_root_bottom_div')
         # Tear down the existent selection
         existentWrapper = $('.ice_selected_element_wrapper')
         if existentWrapper.parent().hasClass 'ice_block_command_wrapper'
@@ -232,8 +229,6 @@ class IceBlockSegment extends IceSegment
           existentWrapper.replaceWith existentWrapper.children()
 
         $('.ice_statement').css('outline', '').data('overlapPos', null).draggable 'enable'
-
-        console.log 'Removed existent wrapper.'
 
         # Construct the selector element
         selector = $ '<div>'
@@ -249,16 +244,23 @@ class IceBlockSegment extends IceSegment
             children = _this.children()
             selected_elements = []
             selected_parents = $('')
+            last_child = null
             children.each(->
               true_block = $(this).children()
               if true_block.hasClass 'ice_statement'
                 if overlap selector, true_block
-                  true_block.draggable 'disable'
-                  console.log 'adding', this, 'to selected parents'
+                  last_child = true_block
+                  true_block.find('.ice_statement').add(true_block).draggable 'disable'
                   selected_parents = selected_parents.add this
                   selected_elements.push true_block.data 'ice_tree'
                 else
                   true_block.css('outline', ''))
+
+            if selected_elements.length == 1
+              selector.remove()
+              last_child.draggable 'enable'
+              selecting = false
+              return
             
             selected_parents.wrapAll '<div>'
             wrapper_div = selected_parents.parent()
@@ -273,11 +275,14 @@ class IceBlockSegment extends IceSegment
                 ui.helper.addClass 'ui-helper'
               end: (event, ui) ->
                 ui.helper.removeClass 'ui-helper'
-            wrapper_div.data 'ice_tree', selected_elements
+            wrapper_div.data 'ice_tree', {
+              syntax_type: 's'
+              is_selected_wrapper: true
+              elements: selected_elements
+            }
 
             selector.remove()
             selecting = false
-            return false
         
         _this = $(this)
         $(document.body).mousemove (event) ->
@@ -291,7 +296,7 @@ class IceBlockSegment extends IceSegment
                   true_block.css('outline', '2px solid #FF0')
                 else
                   true_block.css('outline', ''))
-
+        
         return false
 
 
@@ -600,8 +605,32 @@ class IceEditor
     @workspace = $ '<div>'
     @workspace.addClass 'ice_workspace blockish'
     @root = new IceBlockSegment()
-    @workspace.append @root.blockify()
+    root_element = @root.blockify()
+    @workspace.append root_element
+    
+    bottom_div = $ '<div>'
+    bottom_div.addClass 'ice_root_bottom_div'
 
+    root_element.append bottom_div
+
+    _this = this
+    
+    bottom_div.droppable
+      greedy: true
+      tolerance: 'pointer'
+      hoverClass: 'highlight'
+      accept: (drop) -> true
+      drop: (event, ui) ->
+        moveSegment ui.draggable.data('ice_tree'), if _this.root.children.length > 0 then _this.root.children[_this.root.children.length - 1] else _this.root
+        bottom_div.before $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
+
+    checkHeight = ->
+      setTimeout (->
+        last_element = root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last()
+        last_element_bottom_edge = if last_element.length > 0 then last_element.offset().top + last_element.height() else 0
+        bottom_div.height root_element.height() - last_element_bottom_edge), 0
+
+    $(document.body).mouseup(checkHeight).keydown(checkHeight)
 
     # Append them to the element
     @element.append(@palette).append(@workspace).append @selector

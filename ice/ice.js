@@ -13,11 +13,12 @@
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   moveSegment = function(mobile, target) {
-    var child, last_child, _i, _len;
-    if (mobile instanceof Array) {
+    var child, last_child, _i, _len, _ref;
+    if ((mobile.is_selected_wrapper != null) && mobile.is_selected_wrapper) {
       last_child = target;
-      for (_i = 0, _len = mobile.length; _i < _len; _i++) {
-        child = mobile[_i];
+      _ref = mobile.elements;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        child = _ref[_i];
         moveSegment(child, last_child);
         last_child = child;
       }
@@ -290,10 +291,9 @@
         }
       }
       block.mousedown(function(origin_event) {
-        var existentWrapper, selecting, selector, _this;
-        console.log('recieved mousedown event.');
-        if (origin_event.target === this || $(origin_event.target).parent().is(this) || $(origin_event.target).parent().hasClass('ice_selected_element_wrapper')) {
-          console.log('acting on mousedown event.');
+        var existentWrapper, selecting, selector, target, _this;
+        target = $(origin_event.target);
+        if (target.is(this) || (target.parent().is(this) && target.hasClass('ice_block_command_wrapper')) || target.parent().hasClass('ice_selected_element_wrapper') || target.hasClass('ice_root_bottom_div')) {
           existentWrapper = $('.ice_selected_element_wrapper');
           if (existentWrapper.parent().hasClass('ice_block_command_wrapper')) {
             existentWrapper.parent().replaceWith(existentWrapper.children());
@@ -301,7 +301,6 @@
             existentWrapper.replaceWith(existentWrapper.children());
           }
           $('.ice_statement').css('outline', '').data('overlapPos', null).draggable('enable');
-          console.log('Removed existent wrapper.');
           selector = $('<div>');
           selector.addClass('ice_selector');
           selector.data('overlapRerender', true);
@@ -309,18 +308,19 @@
           corners(selector, origin_event, origin_event);
           selecting = true;
           $(document.body).mouseup(function(origin_event) {
-            var children, selected_elements, selected_parents, wrapper_div;
+            var children, last_child, selected_elements, selected_parents, wrapper_div;
             if (selecting) {
               children = _this.children();
               selected_elements = [];
               selected_parents = $('');
+              last_child = null;
               children.each(function() {
                 var true_block;
                 true_block = $(this).children();
                 if (true_block.hasClass('ice_statement')) {
                   if (overlap(selector, true_block)) {
-                    true_block.draggable('disable');
-                    console.log('adding', this, 'to selected parents');
+                    last_child = true_block;
+                    true_block.find('.ice_statement').add(true_block).draggable('disable');
                     selected_parents = selected_parents.add(this);
                     return selected_elements.push(true_block.data('ice_tree'));
                   } else {
@@ -328,6 +328,12 @@
                   }
                 }
               });
+              if (selected_elements.length === 1) {
+                selector.remove();
+                last_child.draggable('enable');
+                selecting = false;
+                return;
+              }
               selected_parents.wrapAll('<div>');
               wrapper_div = selected_parents.parent();
               wrapper_div.addClass('ice_selected_element_wrapper');
@@ -344,10 +350,13 @@
                   return ui.helper.removeClass('ui-helper');
                 }
               });
-              wrapper_div.data('ice_tree', selected_elements);
+              wrapper_div.data('ice_tree', {
+                syntax_type: 's',
+                is_selected_wrapper: true,
+                elements: selected_elements
+              });
               selector.remove();
-              selecting = false;
-              return false;
+              return selecting = false;
             }
           });
           _this = $(this);
@@ -660,7 +669,7 @@
 
   IceEditor = (function() {
     function IceEditor(element, templates, blockifier) {
-      var block, blocks, details, section, template, title, _i, _len;
+      var block, blocks, bottom_div, checkHeight, details, root_element, section, template, title, _i, _len, _this;
       this.element = $(element);
       this.palette = $('<div>');
       this.palette.addClass('ice_palette blockish');
@@ -700,7 +709,33 @@
       this.workspace = $('<div>');
       this.workspace.addClass('ice_workspace blockish');
       this.root = new IceBlockSegment();
-      this.workspace.append(this.root.blockify());
+      root_element = this.root.blockify();
+      this.workspace.append(root_element);
+      bottom_div = $('<div>');
+      bottom_div.addClass('ice_root_bottom_div');
+      root_element.append(bottom_div);
+      _this = this;
+      bottom_div.droppable({
+        greedy: true,
+        tolerance: 'pointer',
+        hoverClass: 'highlight',
+        accept: function(drop) {
+          return true;
+        },
+        drop: function(event, ui) {
+          moveSegment(ui.draggable.data('ice_tree'), _this.root.children.length > 0 ? _this.root.children[_this.root.children.length - 1] : _this.root);
+          return bottom_div.before($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
+        }
+      });
+      checkHeight = function() {
+        return setTimeout((function() {
+          var last_element, last_element_bottom_edge;
+          last_element = root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last();
+          last_element_bottom_edge = last_element.length > 0 ? last_element.offset().top + last_element.height() : 0;
+          return bottom_div.height(root_element.height() - last_element_bottom_edge);
+        }), 0);
+      };
+      $(document.body).mouseup(checkHeight).keydown(checkHeight);
       this.element.append(this.palette).append(this.workspace).append(this.selector);
       this.blockifier = blockifier;
     }

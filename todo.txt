@@ -1,7 +1,6 @@
 The Big Todo List
- 2. Block selection, group motion, deletion, copying
  3. Auto reblock on text edit
 
 The Little Todo List
- 1. Auto reblock on text edit (
+ 1. Selected elements copy, delete, paste.
  2. Preferred operator macros (e.g. 'not' and 'or')
