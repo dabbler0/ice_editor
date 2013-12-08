@@ -126,7 +126,7 @@
 
 .ice_selector {
   border: 2px solid #55D;
-  position: fixed;
+  position: absolute;
   z-index: 256;
   background-color: rgba(176, 176, 256, 0.5);
 }

@@ -244,14 +244,15 @@ class IceBlockSegment extends IceSegment
           existentWrapper.parent().replaceWith existentWrapper.children()
         else
           existentWrapper.replaceWith existentWrapper.children()
-
+        
+        console.log 'Reenabling draggable'
         $('.ice_statement').css('outline', '').data('overlapPos', null).draggable 'enable'
 
         # Construct the selector element
         selector = $ '<div>'
         selector.addClass 'ice_selector'
         selector.data('overlapRerender', true)
-        block.append selector
+        $(document.body).append selector
         corners selector, origin_event, origin_event
 
         selecting = true
@@ -282,7 +283,6 @@ class IceBlockSegment extends IceSegment
             selected_parents = first.nextUntil(last).andSelf().add(last)
 
             selected_parents.each(->
-              console.log 'traversing w/', this
               true_block = $(this).children()
               if true_block.hasClass 'ice_statement'
                 true_block.css('outline', '2px solid #FF0').draggable 'disable'
@@ -829,7 +829,7 @@ blockify = (node) ->
     else
       return defrost 'ck:for %v%w', [blockify(node.source), blockify(node.body)]
   else if node.constructor.name == 'Range'
-    return defrost 'v:[%v..%v]', [blockify(node.from), blockify(node.to)]
+    return defrost (if node.exclusive then 'v:[%v...%v]' else 'v:[%v..%v]'), [blockify(node.from), blockify(node.to)]
   else if node.constructor.name == 'Parens'
     return defrost 'cv:(%v)', [blockify(node.body.unwrap())]
   else if node.constructor.name == 'Op'
