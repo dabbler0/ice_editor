@@ -250,18 +250,27 @@ class IceBlockSegment extends IceSegment
               if true_block.hasClass 'ice_statement'
                 if overlap selector, true_block
                   last_child = true_block
-                  true_block.find('.ice_statement').add(true_block).draggable 'disable'
                   selected_parents = selected_parents.add this
-                  selected_elements.push true_block.data 'ice_tree'
                 else
                   true_block.css('outline', ''))
 
-            if selected_elements.length == 1
+            if selected_parents.size() == 1
               selector.remove()
               last_child.draggable 'enable'
               selecting = false
               return
             
+            first = selected_parents.first()
+            last = selected_parents.last()
+            selected_parents = first.nextUntil(last).andSelf().add(last)
+
+            selected_parents.each(->
+              console.log 'traversing w/', this
+              true_block = $(this).children()
+              if true_block.hasClass 'ice_statement'
+                true_block.css('outline', '2px solid #FF0').draggable 'disable'
+                selected_elements.push true_block.data 'ice_tree')
+
             selected_parents.wrapAll '<div>'
             wrapper_div = selected_parents.parent()
             wrapper_div.addClass 'ice_selected_element_wrapper'
@@ -280,6 +289,8 @@ class IceBlockSegment extends IceSegment
               is_selected_wrapper: true
               elements: selected_elements
             }
+
+            console.log wrapper_div, wrapper_div.data 'ice_tree'
 
             selector.remove()
             selecting = false
@@ -734,9 +745,28 @@ defrost = (frosting, args) ->
 
   return statement
 
+###
 # CoffeeScript blockifier... shouldn't be here by rights
+###
+
+# Non-exhaustive list of operators
+coffee_operators = {
+  '++': '++'
+  '--': '--'
+  '+': '+'
+  '-': '-'
+  '/': '/'
+  '*': '*'
+  '&&': 'and'
+  '||': 'or'
+  '===': 'is'
+  '!==': 'isnt'
+  '!': 'not'
+  '?': '?'
+}
 
 blockify = (node) ->
+  console.log node
   if node.constructor.name == 'Block'
     new_block = new IceBlockSegment()
     for expr in node.expressions
@@ -763,7 +793,7 @@ blockify = (node) ->
     if node.context? and node.context == 'object'
       return defrost 'c:%v: %v', [blockify(node.variable), blockify(node.value)]
     else
-      return defrost 'c:%v = %v', [blockify(node.variable), blockify(node.value)]
+      return defrost "c:%v #{if node.context? then node.context else '='} %v", [blockify(node.variable), blockify(node.value)]
   else if node.constructor.name == 'For'
     console.log node
     if node.object
@@ -780,11 +810,11 @@ blockify = (node) ->
     return defrost 'cv:(%v)', [blockify(node.body.unwrap())]
   else if node.constructor.name == 'Op'
     if node.second
-      return defrost "v:%v #{node.operator} %v", [blockify(node.first), blockify(node.second)]
+      return defrost "v:%v #{coffee_operators[node.operator]} %v", [blockify(node.first), blockify(node.second)]
     else if node.flip
-      return defrost "v:%v#{node.operator}", [blockify(node.first)]
+      return defrost "v:%v#{coffee_operators[node.operator]}", [blockify(node.first)]
     else
-      return defrost "v:#{node.operator} %v", [blockify(node.first)]
+      return defrost "v:#{coffee_operators[node.operator]} %v", [blockify(node.first)]
   else if node.constructor.name == 'If'
     if node.elseBody?
       return defrost 'ck:if %v%w\nelse%w', [blockify(node.condition), blockify(node.body), blockify(node.elseBody)]
@@ -800,6 +830,8 @@ blockify = (node) ->
     return defrost 'cr:return %v', [blockify(node.expression)]
   else if node.constructor.name == 'Bool'
     return node.val
+  else if node.constructor.name == 'Existence'
+    return defrost 'v:%v?', [blockify(node.expression)]
 
 window.IceEditor = IceEditor
 window.coffee_blockify = (str) -> blockify CoffeeScript.nodes str
