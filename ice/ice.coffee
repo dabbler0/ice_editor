@@ -21,7 +21,6 @@ THE SOFTWARE.
 
 ###
 moveSegment = (mobile, target) ->
-  console.log 'moving', mobile, 'to', target
   # Move a selection of things
   if mobile.is_selected_wrapper? and mobile.is_selected_wrapper
     if target?
@@ -208,6 +207,8 @@ class IceInlineSegment extends IceSegment
         if event.target == this
           input.val ""
           moveSegment ui.draggable.data('ice_tree'), segment
+          if ui.draggable.parent().hasClass('ice_block_command_wrapper')
+            ui.draggable.parent().detach()
           $(this).prepend ui.draggable
 
     return block
@@ -411,6 +412,8 @@ class IceStatement extends IceSegment
           tree = ui.draggable.data('ice_tree')
           if tree.parent? and tree.parent.type == 'block'
             ui.draggable.parent().detach()
+          if ui.draggable.parent().hasClass('ice_block_command_wrapper')
+            ui.draggable.parent().detach()
           block.parent().after $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
           moveSegment tree, segment
     
@@ -469,6 +472,8 @@ class IceHandwrittenSegment extends IceStatement
       drop: (event, ui) ->
         if event.target == this
           moveSegment ui.draggable.data('ice_tree'), segment
+          if ui.draggable.parent().hasClass('ice_block_command_wrapper')
+            ui.draggable.parent().detach()
           block.parent().after $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
     
     drop_target.click ->
@@ -630,6 +635,8 @@ class IceEditor
       hoverClass: 'highlight'
       accept: (drop) -> true
       drop: (event, ui) ->
+        if ui.draggable.parent().hasClass('ice_block_command_wrapper')
+          ui.draggable.parent().detach()
         moveSegment ui.draggable.data('ice_tree'), null
         ui.draggable.detach()
         ui.draggable.trigger 'dragstop'
@@ -656,6 +663,8 @@ class IceEditor
       accept: (drop) -> true
       drop: (event, ui) ->
         moveSegment ui.draggable.data('ice_tree'), if _this.root.children.length > 0 then _this.root.children[_this.root.children.length - 1] else _this.root
+        if ui.draggable.parent().hasClass('ice_block_command_wrapper')
+          ui.draggable.parent().detach()
         bottom_div.before $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
 
     checkHeight = ->
@@ -711,6 +720,8 @@ class IceEditor
       accept: (drop) -> true
       drop: (event, ui) ->
         moveSegment ui.draggable.data('ice_tree'), if _this.root.children.length > 0 then _this.root.children[_this.root.children.length - 1] else _this.root
+        if ui.draggable.parent().hasClass('ice_block_command_wrapper')
+          ui.draggable.parent().detach()
         bottom_div.before $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
 
     checkHeight = ->

@@ -30,7 +30,6 @@ THE SOFTWARE.
 
   moveSegment = function(mobile, target) {
     var child, last_child, _i, _j, _len, _len1, _ref, _ref1;
-    console.log('moving', mobile, 'to', target);
     if ((mobile.is_selected_wrapper != null) && mobile.is_selected_wrapper) {
       if (target != null) {
         last_child = target;
@@ -260,6 +259,9 @@ THE SOFTWARE.
           if (event.target === this) {
             input.val("");
             moveSegment(ui.draggable.data('ice_tree'), segment);
+            if (ui.draggable.parent().hasClass('ice_block_command_wrapper')) {
+              ui.draggable.parent().detach();
+            }
             return $(this).prepend(ui.draggable);
           }
         }
@@ -509,6 +511,9 @@ THE SOFTWARE.
             if ((tree.parent != null) && tree.parent.type === 'block') {
               ui.draggable.parent().detach();
             }
+            if (ui.draggable.parent().hasClass('ice_block_command_wrapper')) {
+              ui.draggable.parent().detach();
+            }
             block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
             return moveSegment(tree, segment);
           }
@@ -575,6 +580,9 @@ THE SOFTWARE.
         drop: function(event, ui) {
           if (event.target === this) {
             moveSegment(ui.draggable.data('ice_tree'), segment);
+            if (ui.draggable.parent().hasClass('ice_block_command_wrapper')) {
+              ui.draggable.parent().detach();
+            }
             return block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
           }
         }
@@ -738,6 +746,9 @@ THE SOFTWARE.
           return true;
         },
         drop: function(event, ui) {
+          if (ui.draggable.parent().hasClass('ice_block_command_wrapper')) {
+            ui.draggable.parent().detach();
+          }
           moveSegment(ui.draggable.data('ice_tree'), null);
           ui.draggable.detach();
           ui.draggable.trigger('dragstop');
@@ -762,6 +773,9 @@ THE SOFTWARE.
         },
         drop: function(event, ui) {
           moveSegment(ui.draggable.data('ice_tree'), _this.root.children.length > 0 ? _this.root.children[_this.root.children.length - 1] : _this.root);
+          if (ui.draggable.parent().hasClass('ice_block_command_wrapper')) {
+            ui.draggable.parent().detach();
+          }
           return bottom_div.before($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
         }
       });
@@ -822,6 +836,9 @@ THE SOFTWARE.
         },
         drop: function(event, ui) {
           moveSegment(ui.draggable.data('ice_tree'), _this.root.children.length > 0 ? _this.root.children[_this.root.children.length - 1] : _this.root);
+          if (ui.draggable.parent().hasClass('ice_block_command_wrapper')) {
+            ui.draggable.parent().detach();
+          }
           return bottom_div.before($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
         }
       });
