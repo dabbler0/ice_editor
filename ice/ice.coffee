@@ -663,9 +663,12 @@ class IceEditor
       $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(->
         tree = $(this).data 'ice_tree'
         try
-          block = blockifier tree.stringify()
-          tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
-          $(this).replaceWith block.children[0].blockify()
+          # This first-child hack is because we right now require blockifiers to wrap their entire thing in an IceBlock statement... We might want to be a bit more elegant. Or not.
+          block = (blockifier tree.stringify()).children[0]
+          block.parent = tree.parent
+          console.log 'removed', tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
+          console.log 'so now', tree.parent.children
+          $(this).replaceWith block.blockify()
         catch error
           console.log error
       )

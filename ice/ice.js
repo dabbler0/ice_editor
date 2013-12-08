@@ -769,9 +769,11 @@ THE SOFTWARE.
           var error, tree;
           tree = $(this).data('ice_tree');
           try {
-            block = blockifier(tree.stringify());
-            tree.parent.children.splice(tree.parent.children.indexOf(tree), 1, block);
-            return $(this).replaceWith(block.children[0].blockify());
+            block = (blockifier(tree.stringify())).children[0];
+            block.parent = tree.parent;
+            console.log('removed', tree.parent.children.splice(tree.parent.children.indexOf(tree), 1, block));
+            console.log('so now', tree.parent.children);
+            return $(this).replaceWith(block.blockify());
           } catch (_error) {
             error = _error;
             return console.log(error);
