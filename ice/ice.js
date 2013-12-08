@@ -309,7 +309,6 @@ THE SOFTWARE.
       block.mousedown(function(origin_event) {
         var existentWrapper, selecting, selector, target, _this;
         target = $(origin_event.target);
-        console.log('Recieved event for', target, 'in', this);
         if (target.is(this) || (target.parent().is(this) && target.hasClass('ice_block_command_wrapper')) || target.parent().hasClass('ice_selected_element_wrapper') || target.hasClass('ice_root_bottom_div')) {
           existentWrapper = $('.ice_selected_element_wrapper');
           if (existentWrapper.parent().hasClass('ice_block_command_wrapper')) {
@@ -317,7 +316,6 @@ THE SOFTWARE.
           } else {
             existentWrapper.replaceWith(existentWrapper.children());
           }
-          console.log('Reenabling draggable');
           $('.ice_statement').css('outline', '').data('overlapPos', null).draggable('enable');
           selector = $('<div>');
           selector.addClass('ice_selector');
@@ -370,7 +368,6 @@ THE SOFTWARE.
                 revert: 'invalid',
                 handle: '.ice_statement',
                 start: function(event, ui) {
-                  console.log('dragging wrapper div');
                   return ui.helper.addClass('ui-helper');
                 },
                 end: function(event, ui) {
@@ -382,7 +379,6 @@ THE SOFTWARE.
                 is_selected_wrapper: true,
                 elements: selected_elements
               });
-              console.log(wrapper_div, wrapper_div.data('ice_tree'));
               selector.remove();
               return selecting = false;
             }
@@ -760,7 +756,6 @@ THE SOFTWARE.
           var last_element, last_element_bottom_edge;
           last_element = _this.root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last();
           last_element_bottom_edge = last_element.length > 0 ? last_element.position().top + last_element.height() : 0;
-          console.log('measuring between', last_element, '(', last_element_bottom_edge, ')', 'and', _this.root_element, '(', _this.root_element.height(), ')');
           return bottom_div.height(_this.root_element.height() - last_element_bottom_edge);
         }), 0);
       };
@@ -800,7 +795,6 @@ THE SOFTWARE.
           var last_element, last_element_bottom_edge;
           last_element = _this.root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last();
           last_element_bottom_edge = last_element.length > 0 ? last_element.position().top + last_element.height() : 0;
-          console.log('measuring between', last_element, '(', last_element_bottom_edge, ')', 'and', _this.root_element, '(', _this.root_element.height(), ')');
           return bottom_div.height(_this.root_element.height() - last_element_bottom_edge);
         }), 0);
       };
