@@ -273,6 +273,7 @@ class IceBlockSegment extends IceSegment
 
             if selected_parents.size() == 1
               selector.remove()
+              last_child.find('.ice_statement').draggable 'disable'
               last_child.draggable 'enable'
               selecting = false
               return
@@ -434,6 +435,9 @@ class IceStatement extends IceSegment
 
 class IceHandwrittenSegment extends IceStatement
   constructor: -> super []
+
+  reblock: (new_block) ->
+    @parent.children.splice @parent.children.indexOf(this), 1, new_block
 
   blockify: ->
     segment = this
@@ -655,7 +659,18 @@ class IceEditor
         last_element_bottom_edge = if last_element.length > 0 then last_element.position().top + last_element.height() else 0
         bottom_div.height _this.root_element.height() - last_element_bottom_edge), 0
 
-    $(document.body).mouseup(checkHeight).keydown(checkHeight)
+    attempt_reblock = ->
+      $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(->
+        tree = $(this).data 'ice_tree'
+        try
+          block = blockifier tree.stringify()
+          tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
+          $(this).replaceWith block.children[0].blockify()
+        catch error
+          console.log error
+      )
+
+    $(document.body).mouseup(checkHeight).mouseup(attempt_reblock).keydown(checkHeight).keydown((event) -> if event.keyCode in [13, 9] then attempt_reblock())
 
     # Append them to the element
     @element.append(@palette).append(@workspace).append @selector

@@ -344,6 +344,7 @@ THE SOFTWARE.
               });
               if (selected_parents.size() === 1) {
                 selector.remove();
+                last_child.find('.ice_statement').draggable('disable');
                 last_child.draggable('enable');
                 selecting = false;
                 return;
@@ -541,6 +542,10 @@ THE SOFTWARE.
       IceHandwrittenSegment.__super__.constructor.call(this, []);
     }
 
+    IceHandwrittenSegment.prototype.reblock = function(new_block) {
+      return this.parent.children.splice(this.parent.children.indexOf(this), 1, new_block);
+    };
+
     IceHandwrittenSegment.prototype.blockify = function() {
       var block, drop_target, input, segment;
       segment = this;
@@ -693,7 +698,7 @@ THE SOFTWARE.
 
   IceEditor = (function() {
     function IceEditor(element, templates, blockifier) {
-      var block, blocks, bottom_div, checkHeight, details, section, template, title, _i, _len, _this;
+      var attempt_reblock, block, blocks, bottom_div, checkHeight, details, section, template, title, _i, _len, _this;
       this.element = $(element);
       this.palette = $('<div>');
       this.palette.addClass('ice_palette blockish');
@@ -759,7 +764,26 @@ THE SOFTWARE.
           return bottom_div.height(_this.root_element.height() - last_element_bottom_edge);
         }), 0);
       };
-      $(document.body).mouseup(checkHeight).keydown(checkHeight);
+      attempt_reblock = function() {
+        return $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(function() {
+          var error, tree;
+          tree = $(this).data('ice_tree');
+          try {
+            block = blockifier(tree.stringify());
+            tree.parent.children.splice(tree.parent.children.indexOf(tree), 1, block);
+            return $(this).replaceWith(block.children[0].blockify());
+          } catch (_error) {
+            error = _error;
+            return console.log(error);
+          }
+        });
+      };
+      $(document.body).mouseup(checkHeight).mouseup(attempt_reblock).keydown(checkHeight).keydown(function(event) {
+        var _ref;
+        if ((_ref = event.keyCode) === 13 || _ref === 9) {
+          return attempt_reblock();
+        }
+      });
       this.element.append(this.palette).append(this.workspace).append(this.selector);
       this.blockifier = blockifier;
     }
