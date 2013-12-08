@@ -67,9 +67,35 @@ window.onload = ->
   
   $("#set").click ->
     editor.setValue $("#value").val()
+
+  $("#clear").click ->
+    editor.setValue ''
+    $("#value").val ''
   
   $("#run").click ->
     $("#value").val editor.getValue()[3..].replace /\n  /g, '\n'
     CoffeeScript.eval $("#value").val()
   
+  # Example first program
+  $("#value").val """
+distance = (a,b) ->
+  d = 0
+  for char, i in a
+    if char isnt b[i]
+      d += 1
+  return d
+alert('Guess the 5-letter secret in 10 guesses!')
+secret = 'hello'
+for [1..10]
+  guess = prompt('Guess:')
+  if guess is secret
+    alert('Correct!')
+    break
+  else
+    alert('Nope! You are ' + distance(guess,secret) + ' letters off.')
+alert('The end!')
+"""
+
+  editor.setValue $("#value").val()
+
   window.editor = editor

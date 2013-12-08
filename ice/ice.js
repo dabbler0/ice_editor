@@ -7,7 +7,7 @@
 
 
 (function() {
-  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceSegment, IceStatement, IceStaticSegment, blockify, coffee_operators, corners, defrost, genPosData, moveSegment, overlap,
+  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceSegment, IceStatement, IceStaticSegment, blockify, coffee_operators, coffee_reserved, corners, defrost, genPosData, moveSegment, overlap,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -868,8 +868,10 @@
     '?': '?'
   };
 
+  coffee_reserved = ['return', 'break'];
+
   blockify = function(node) {
-    var arg, child, expr, new_block, object, param, property, _i, _j, _len, _len1, _ref, _ref1;
+    var arg, child, expr, new_block, object, param, property, _i, _j, _len, _len1, _ref, _ref1, _ref2;
     console.log(node);
     if (node.constructor.name === 'Block') {
       new_block = new IceBlockSegment();
@@ -890,43 +892,47 @@
         return blockify(node.base);
       }
     } else if (node.constructor.name === 'Literal') {
-      return node.value;
+      if (_ref1 = node.value, __indexOf.call(coffee_reserved, _ref1) >= 0) {
+        return defrost('cr:' + node.value.replace(/%/g, '%%'), []);
+      } else {
+        return node.value;
+      }
     } else if (node.constructor.name === 'Call') {
       return defrost('cv:%v(' + ((function() {
-        var _j, _len1, _ref1, _results;
-        _ref1 = node.args;
+        var _j, _len1, _ref2, _results;
+        _ref2 = node.args;
         _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          arg = _ref1[_j];
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          arg = _ref2[_j];
           _results.push('%v');
         }
         return _results;
       })()).join(',') + ')', [blockify(node.variable)].concat((function() {
-        var _j, _len1, _ref1, _results;
-        _ref1 = node.args;
+        var _j, _len1, _ref2, _results;
+        _ref2 = node.args;
         _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          arg = _ref1[_j];
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          arg = _ref2[_j];
           _results.push(blockify(arg));
         }
         return _results;
       })()));
     } else if (node.constructor.name === 'Code') {
       return defrost('v:(' + ((function() {
-        var _j, _len1, _ref1, _results;
-        _ref1 = node.params;
+        var _j, _len1, _ref2, _results;
+        _ref2 = node.params;
         _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          param = _ref1[_j];
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          param = _ref2[_j];
           _results.push('%v');
         }
         return _results;
       })()).join(',') + ') ->%w', ((function() {
-        var _j, _len1, _ref1, _results;
-        _ref1 = node.params;
+        var _j, _len1, _ref2, _results;
+        _ref2 = node.params;
         _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          param = _ref1[_j];
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          param = _ref2[_j];
           _results.push(blockify(param));
         }
         return _results;
@@ -972,29 +978,29 @@
       }
     } else if (node.constructor.name === 'Arr') {
       return defrost('v:[' + ((function() {
-        var _j, _len1, _ref1, _results;
-        _ref1 = node.objects;
+        var _j, _len1, _ref2, _results;
+        _ref2 = node.objects;
         _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          object = _ref1[_j];
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          object = _ref2[_j];
           _results.push('%v');
         }
         return _results;
       })()).join(',') + ']', (function() {
-        var _j, _len1, _ref1, _results;
-        _ref1 = node.objects;
+        var _j, _len1, _ref2, _results;
+        _ref2 = node.objects;
         _results = [];
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          object = _ref1[_j];
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          object = _ref2[_j];
           _results.push(blockify(object));
         }
         return _results;
       })());
     } else if (node.constructor.name === 'Obj') {
       new_block = new IceBlockSegment();
-      _ref1 = node.properties;
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        property = _ref1[_j];
+      _ref2 = node.properties;
+      for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+        property = _ref2[_j];
         new_block.children.push(blockify(property));
       }
       return defrost('v:{%w\n}', [new_block]);

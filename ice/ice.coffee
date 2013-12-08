@@ -750,7 +750,7 @@ defrost = (frosting, args) ->
 ###
 
 # Non-exhaustive list of operators
-coffee_operators = {
+coffee_operators =
   '++': '++'
   '--': '--'
   '+': '+'
@@ -763,7 +763,11 @@ coffee_operators = {
   '!==': 'isnt'
   '!': 'not'
   '?': '?'
-}
+
+coffee_reserved = [
+  'return'
+  'break'
+]
 
 blockify = (node) ->
   console.log node
@@ -782,7 +786,10 @@ blockify = (node) ->
     else
       return blockify node.base
   else if node.constructor.name == 'Literal'
-    return node.value
+    if node.value in coffee_reserved
+      return defrost 'cr:' + node.value.replace(/%/g, '%%'), []
+    else
+      return node.value
   else if node.constructor.name == 'Call'
     return defrost 'cv:%v(' + ('%v' for arg in node.args).join(',') + ')', [blockify node.variable].concat(blockify(arg) for arg in node.args)
   else if node.constructor.name == 'Code'
