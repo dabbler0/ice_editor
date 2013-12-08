@@ -29,14 +29,23 @@ THE SOFTWARE.
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
   moveSegment = function(mobile, target) {
-    var child, last_child, _i, _len, _ref;
+    var child, last_child, _i, _j, _len, _len1, _ref, _ref1;
+    console.log('moving', mobile, 'to', target);
     if ((mobile.is_selected_wrapper != null) && mobile.is_selected_wrapper) {
-      last_child = target;
-      _ref = mobile.elements;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        child = _ref[_i];
-        moveSegment(child, last_child);
-        last_child = child;
+      if (target != null) {
+        last_child = target;
+        _ref = mobile.elements;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          child = _ref[_i];
+          moveSegment(child, last_child);
+          last_child = child;
+        }
+      } else {
+        _ref1 = mobile.elements;
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          child = _ref1[_j];
+          moveSegment(child, null);
+        }
       }
       return;
     }

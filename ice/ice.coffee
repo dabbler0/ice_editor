@@ -21,12 +21,17 @@ THE SOFTWARE.
 
 ###
 moveSegment = (mobile, target) ->
+  console.log 'moving', mobile, 'to', target
   # Move a selection of things
   if mobile.is_selected_wrapper? and mobile.is_selected_wrapper
-    last_child = target
-    for child in mobile.elements
-      moveSegment child, last_child
-      last_child = child
+    if target?
+      last_child = target
+      for child in mobile.elements
+        moveSegment child, last_child
+        last_child = child
+    else
+      for child in mobile.elements
+        moveSegment child, null
     return
 
   # If the mobile element is coming from another parent, detatch it
