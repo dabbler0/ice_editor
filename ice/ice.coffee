@@ -284,7 +284,7 @@ class IceBlockSegment extends IceSegment
             selected_parents.each(->
               true_block = $(this).children()
               if true_block.hasClass 'ice_statement'
-                true_block.css('outline', '2px solid #FF0').draggable 'disable'
+                true_block.css('outline', '2px solid #FF0').find('.ice_statement').add(true_block).draggable 'disable'
                 selected_elements.push true_block.data 'ice_tree')
 
             selected_parents.wrapAll '<div>'
