@@ -245,7 +245,6 @@ class IceBlockSegment extends IceSegment
         else
           existentWrapper.replaceWith existentWrapper.children()
         
-        console.log 'Reenabling draggable'
         $('.ice_statement').css('outline', '').data('overlapPos', null).draggable 'enable'
 
         # Construct the selector element
@@ -297,7 +296,6 @@ class IceBlockSegment extends IceSegment
               revert: 'invalid'
               handle: '.ice_statement'
               start: (event, ui) ->
-                console.log 'dragging wrapper div'
                 ui.helper.addClass 'ui-helper'
               end: (event, ui) ->
                 ui.helper.removeClass 'ui-helper'
@@ -307,7 +305,6 @@ class IceBlockSegment extends IceSegment
               elements: selected_elements
             }
 
-            console.log wrapper_div, wrapper_div.data 'ice_tree'
 
             selector.remove()
             selecting = false
@@ -633,13 +630,13 @@ class IceEditor
     @workspace = $ '<div>'
     @workspace.addClass 'ice_workspace blockish'
     @root = new IceBlockSegment()
-    root_element = @root.blockify()
-    @workspace.append root_element
+    @root_element = @root.blockify()
+    @workspace.append @root_element
     
     bottom_div = @bottom_div = $ '<div>'
     bottom_div.addClass 'ice_root_bottom_div'
 
-    root_element.append bottom_div
+    @root_element.append bottom_div
 
     _this = this
     
@@ -654,9 +651,9 @@ class IceEditor
 
     checkHeight = ->
       setTimeout (->
-        last_element = root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last()
-        last_element_bottom_edge = if last_element.length > 0 then last_element.offset().top + last_element.height() else 0
-        bottom_div.height root_element.height() - last_element_bottom_edge), 0
+        last_element = _this.root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last()
+        last_element_bottom_edge = if last_element.length > 0 then last_element.position().top + last_element.height() else 0
+        bottom_div.height _this.root_element.height() - last_element_bottom_edge), 0
 
     $(document.body).mouseup(checkHeight).keydown(checkHeight)
 
@@ -674,13 +671,13 @@ class IceEditor
 
     # Insert everything
     @root = @blockifier value
-    root_element = @root.blockify()
-    @workspace.append root_element
+    @root_element = @root.blockify()
+    @workspace.append @root_element
     
     bottom_div = @bottom_div = $ '<div>'
     bottom_div.addClass 'ice_root_bottom_div'
 
-    root_element.append bottom_div
+    @root_element.append bottom_div
 
     _this = this
     
@@ -695,9 +692,9 @@ class IceEditor
 
     checkHeight = ->
       setTimeout (->
-        last_element = root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last()
-        last_element_bottom_edge = if last_element.length > 0 then last_element.offset().top + last_element.height() else 0
-        bottom_div.height root_element.height() - last_element_bottom_edge), 0
+        last_element = _this.root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last()
+        last_element_bottom_edge = if last_element.length > 0 then last_element.position().top + last_element.height() else 0
+        bottom_div.height _this.root_element.height() - last_element_bottom_edge), 0
 
     $(document.body).mouseup(checkHeight).keydown(checkHeight)
 
@@ -787,7 +784,6 @@ coffee_reserved = [
 ]
 
 blockify = (node) ->
-  console.log node
   if node.constructor.name == 'Block'
     new_block = new IceBlockSegment()
     for expr in node.expressions
@@ -819,7 +815,6 @@ blockify = (node) ->
     else
       return defrost "c:%v #{if node.context? then node.context else '='} %v", [blockify(node.variable), blockify(node.value)]
   else if node.constructor.name == 'For'
-    console.log node
     if node.object
       return defrost 'ck:for %v of %v%w', [blockify(node.index), blockify(node.source), blockify(node.body)]
     if node.index

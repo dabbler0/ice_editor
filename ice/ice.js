@@ -309,6 +309,7 @@ THE SOFTWARE.
       block.mousedown(function(origin_event) {
         var existentWrapper, selecting, selector, target, _this;
         target = $(origin_event.target);
+        console.log('Recieved event for', target, 'in', this);
         if (target.is(this) || (target.parent().is(this) && target.hasClass('ice_block_command_wrapper')) || target.parent().hasClass('ice_selected_element_wrapper') || target.hasClass('ice_root_bottom_div')) {
           existentWrapper = $('.ice_selected_element_wrapper');
           if (existentWrapper.parent().hasClass('ice_block_command_wrapper')) {
@@ -696,7 +697,7 @@ THE SOFTWARE.
 
   IceEditor = (function() {
     function IceEditor(element, templates, blockifier) {
-      var block, blocks, bottom_div, checkHeight, details, root_element, section, template, title, _i, _len, _this;
+      var block, blocks, bottom_div, checkHeight, details, section, template, title, _i, _len, _this;
       this.element = $(element);
       this.palette = $('<div>');
       this.palette.addClass('ice_palette blockish');
@@ -736,11 +737,11 @@ THE SOFTWARE.
       this.workspace = $('<div>');
       this.workspace.addClass('ice_workspace blockish');
       this.root = new IceBlockSegment();
-      root_element = this.root.blockify();
-      this.workspace.append(root_element);
+      this.root_element = this.root.blockify();
+      this.workspace.append(this.root_element);
       bottom_div = this.bottom_div = $('<div>');
       bottom_div.addClass('ice_root_bottom_div');
-      root_element.append(bottom_div);
+      this.root_element.append(bottom_div);
       _this = this;
       bottom_div.droppable({
         greedy: true,
@@ -757,9 +758,10 @@ THE SOFTWARE.
       checkHeight = function() {
         return setTimeout((function() {
           var last_element, last_element_bottom_edge;
-          last_element = root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last();
-          last_element_bottom_edge = last_element.length > 0 ? last_element.offset().top + last_element.height() : 0;
-          return bottom_div.height(root_element.height() - last_element_bottom_edge);
+          last_element = _this.root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last();
+          last_element_bottom_edge = last_element.length > 0 ? last_element.position().top + last_element.height() : 0;
+          console.log('measuring between', last_element, '(', last_element_bottom_edge, ')', 'and', _this.root_element, '(', _this.root_element.height(), ')');
+          return bottom_div.height(_this.root_element.height() - last_element_bottom_edge);
         }), 0);
       };
       $(document.body).mouseup(checkHeight).keydown(checkHeight);
@@ -772,14 +774,14 @@ THE SOFTWARE.
     };
 
     IceEditor.prototype.setValue = function(value) {
-      var bottom_div, checkHeight, root_element, _this;
+      var bottom_div, checkHeight, _this;
       this.workspace.html('');
       this.root = this.blockifier(value);
-      root_element = this.root.blockify();
-      this.workspace.append(root_element);
+      this.root_element = this.root.blockify();
+      this.workspace.append(this.root_element);
       bottom_div = this.bottom_div = $('<div>');
       bottom_div.addClass('ice_root_bottom_div');
-      root_element.append(bottom_div);
+      this.root_element.append(bottom_div);
       _this = this;
       bottom_div.droppable({
         greedy: true,
@@ -796,9 +798,10 @@ THE SOFTWARE.
       checkHeight = function() {
         return setTimeout((function() {
           var last_element, last_element_bottom_edge;
-          last_element = root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last();
-          last_element_bottom_edge = last_element.length > 0 ? last_element.offset().top + last_element.height() : 0;
-          return bottom_div.height(root_element.height() - last_element_bottom_edge);
+          last_element = _this.root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last();
+          last_element_bottom_edge = last_element.length > 0 ? last_element.position().top + last_element.height() : 0;
+          console.log('measuring between', last_element, '(', last_element_bottom_edge, ')', 'and', _this.root_element, '(', _this.root_element.height(), ')');
+          return bottom_div.height(_this.root_element.height() - last_element_bottom_edge);
         }), 0);
       };
       return $(document.body).mouseup(checkHeight).keydown(checkHeight);
@@ -888,7 +891,6 @@ THE SOFTWARE.
 
   blockify = function(node) {
     var arg, child, expr, new_block, object, param, property, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-    console.log(node);
     if (node.constructor.name === 'Block') {
       new_block = new IceBlockSegment();
       _ref = node.expressions;
@@ -962,7 +964,6 @@ THE SOFTWARE.
         return defrost("c:%v " + (node.context != null ? node.context : '=') + " %v", [blockify(node.variable), blockify(node.value)]);
       }
     } else if (node.constructor.name === 'For') {
-      console.log(node);
       if (node.object) {
         return defrost('ck:for %v of %v%w', [blockify(node.index), blockify(node.source), blockify(node.body)]);
       }
