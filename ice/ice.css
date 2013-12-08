@@ -62,10 +62,10 @@
   left: 0;
 }
 .ice_palette {
-  width: 30%;
+  width: 200px;
 }
 .ice_workspace {
-  left: 30%;
+  left: 200px;
   background-color: #DDD;
 }
 
@@ -80,8 +80,8 @@
 }
 
 #editor {
-  height: 300px;
-  width: 600px;
+  height: 600px;
+  width: 100%;
   position: relative;
 }
 
