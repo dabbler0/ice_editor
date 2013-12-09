@@ -252,6 +252,7 @@ class IceBlockSegment extends IceSegment
           existentWrapper.replaceWith existentWrapper.children()
         
         $('.ice_statement').css('outline', '').data('overlapPos', null).draggable 'enable'
+        $('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable 'enable'
 
         # Construct the selector element
         selector = $ '<div>'
@@ -280,6 +281,7 @@ class IceBlockSegment extends IceSegment
             if selected_parents.size() == 1
               selector.remove()
               last_child.find('.ice_statement').draggable 'disable'
+              last_child.find('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable 'disable'
               last_child.draggable 'enable'
               selecting = false
               return
@@ -292,6 +294,7 @@ class IceBlockSegment extends IceSegment
               true_block = $(this).children()
               if true_block.hasClass 'ice_statement'
                 true_block.css('outline', '2px solid #FF0').find('.ice_statement').add(true_block).draggable 'disable'
+                true_block.find('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable 'disable'
                 selected_elements.push true_block.data 'ice_tree')
 
             selected_parents.wrapAll '<div>'
@@ -670,7 +673,7 @@ class IceEditor
     checkHeight = ->
       setTimeout (->
         last_element = _this.root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last()
-        last_element_bottom_edge = if last_element.length > 0 then last_element.position().top + last_element.height() else 0
+        last_element_bottom_edge = if last_element.length > 0 then last_element.position().top + last_element.height() else 5
         bottom_div.height _this.root_element.height() - last_element_bottom_edge), 0
 
     attempt_reblock = ->
@@ -727,7 +730,7 @@ class IceEditor
     checkHeight = ->
       setTimeout (->
         last_element = _this.root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last()
-        last_element_bottom_edge = if last_element.length > 0 then last_element.position().top + last_element.height() else 0
+        last_element_bottom_edge = if last_element.length > 0 then last_element.position().top + last_element.height() else 5
         bottom_div.height _this.root_element.height() - last_element_bottom_edge), 0
 
     $(document.body).mouseup(checkHeight).keydown(checkHeight)
