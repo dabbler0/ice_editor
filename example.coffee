@@ -62,22 +62,21 @@ window.onload = ->
       'c:###%w\n###'
     ]
   }, coffee_blockify)
+
   $("#get").click ->
-    $("#value").val editor.getValue()[3..].replace /\n  /g, '\n'
+    editor.melt()
   
   $("#set").click ->
-    editor.setValue $("#value").val()
+    editor.freeze()
 
   $("#clear").click ->
     editor.setValue ''
-    $("#value").val ''
   
   $("#run").click ->
-    $("#value").val editor.getValue()[3..].replace /\n  /g, '\n'
-    CoffeeScript.eval $("#value").val()
+    CoffeeScript.eval editor.getValue()[3..].replace /\n  /g, '\n'
   
   # Example first program
-  $("#value").val """
+  editor.setValue """
 distance = (a,b) ->
   d = 0
   for char, i in a
@@ -95,7 +94,5 @@ for [1..10]
     alert('Nope! You are ' + distance(guess,secret) + ' letters off.')
 alert('The end!')
 """
-
-  editor.setValue $("#value").val()
 
   window.editor = editor

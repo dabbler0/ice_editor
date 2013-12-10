@@ -193,14 +193,44 @@ THE SOFTWARE.
       this.type = 'inline';
       this.accept = accept;
       this.droppable = true;
+      this.line_wrapped = false;
     }
 
     IceInlineSegment.prototype._reconstruct = function() {
       return new IceInlineSegment(this.accept);
     };
 
+    IceInlineSegment.prototype.stringify = function() {
+      var child, string, _i, _len, _ref;
+      if (this.line_wrapped) {
+        return '\n  ' + ((function() {
+          var _i, _len, _ref, _results;
+          _ref = this.children;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            child = _ref[_i];
+            _results.push(child.stringify());
+          }
+          return _results;
+        }).call(this)).join('\n').replace(/\n/g, '\n  ');
+      } else {
+        string = '';
+        _ref = this.children;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          child = _ref[_i];
+          if (typeof child === 'string') {
+            string += child;
+          } else {
+            string += child.stringify();
+          }
+        }
+        return string;
+      }
+    };
+
     IceInlineSegment.prototype.blockify = function() {
-      var big_wrapper, block, checkHeight, child, input, segment, _i, _len, _ref;
+      var block, checkHeight, checkHeightDelayed, child, input, lineWrap, segment, unWrap, _i, _len, _ref,
+        _this = this;
       segment = this;
       block = $('<span>');
       block.addClass('ice_segment');
@@ -224,25 +254,39 @@ THE SOFTWARE.
         }
       });
       block.append(input);
-      big_wrapper = false;
-      checkHeight = function() {
-        return setTimeout((function() {
-          var ghost_element, wrapper_div;
-          if (block.height() > 100 && !big_wrapper) {
-            ghost_element = $('<div>');
-            block.after(ghost_element);
-            wrapper_div = $('<div>').addClass('ice_big_inline_wrapper');
-            wrapper_div.append(block);
-            ghost_element.replaceWith(wrapper_div);
-            return big_wrapper = true;
-          } else if (block.height() < 100 && big_wrapper) {
-            block.parent().replaceWith(block);
-            return big_wrapper = false;
-          }
-        }), 0);
+      this.line_wrapped = false;
+      lineWrap = function() {
+        var ghost_element, wrapper_div;
+        if (_this.line_wrapped) {
+          return false;
+        }
+        ghost_element = $('<div>');
+        block.after(ghost_element);
+        wrapper_div = $('<div>').addClass('ice_big_inline_wrapper');
+        wrapper_div.append(block);
+        ghost_element.replaceWith(wrapper_div);
+        return _this.line_wrapped = true;
       };
-      $(document.body).mouseup(checkHeight).keydown(checkHeight);
+      unWrap = function() {
+        if (!_this.line_wrapped) {
+          return false;
+        }
+        block.parent().replaceWith(block);
+        return _this.line_wrapped = false;
+      };
+      checkHeight = function() {
+        if ((block.height() > 100 || block.has('.ice_block').length > 0) && !_this.line_wrapped) {
+          return lineWrap();
+        } else if ((block.height() < 100 && block.has('.ice_block').length === 0) && _this.line_wrapped) {
+          return unWrap();
+        }
+      };
+      checkHeightDelayed = function() {
+        return setTimeout(checkHeight, 0);
+      };
+      $(document.body).mouseup(checkHeightDelayed).keydown(checkHeightDelayed);
       setTimeout(checkHeight, 0);
+      block.data('_ice_line_wrap_function', lineWrap);
       input.autoGrowInput({
         comfortZone: 0,
         minWidth: 20,
@@ -719,7 +763,26 @@ THE SOFTWARE.
   IceEditor = (function() {
     function IceEditor(element, templates, blockifier) {
       var attempt_reblock, block, blocks, bottom_div, checkHeight, details, section, template, title, _i, _len, _this;
+      this.mode = 'block';
       this.element = $(element);
+      this.editor_el = document.createElement('div');
+      $(this.editor_el).css({
+        position: 'absolute',
+        display: 'none',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        'line-height': '20px'
+      });
+      this.element.append(this.editor_el);
+      this.editor = ace.edit(this.editor_el);
+      this.editor.setTheme('ace/theme/chrome');
+      this.editor.setFontSize(15);
+      this.editor.getSession().setUseWorker(false);
+      this.editor.getSession().setMode('ace/mode/coffee');
+      this.editor.getSession().setTabSize(2);
+      this.editor.getSession().setUseSoftTabs(true);
       this.palette = $('<div>');
       this.palette.addClass('ice_palette blockish');
       for (title in templates) {
@@ -763,6 +826,8 @@ THE SOFTWARE.
       this.root = new IceBlockSegment();
       this.root_element = this.root.blockify();
       this.workspace.append(this.root_element);
+      this.color_tester = $("<div>").addClass('color-tester');
+      this.element.append(this.color_tester);
       bottom_div = this.bottom_div = $('<div>');
       bottom_div.addClass('ice_root_bottom_div');
       this.root_element.append(bottom_div);
@@ -797,8 +862,6 @@ THE SOFTWARE.
           try {
             block = (blockifier(tree.stringify())).children[0];
             block.parent = tree.parent;
-            console.log('removed', tree.parent.children.splice(tree.parent.children.indexOf(tree), 1, block));
-            console.log('so now', tree.parent.children);
             return $(this).replaceWith(block.blockify());
           } catch (_error) {
             error = _error;
@@ -817,7 +880,11 @@ THE SOFTWARE.
     }
 
     IceEditor.prototype.getValue = function() {
-      return this.root.stringify();
+      if (this.mode === 'block') {
+        return this.root.stringify();
+      } else {
+        return this.editor.getValue();
+      }
     };
 
     IceEditor.prototype.setValue = function(value) {
@@ -853,7 +920,109 @@ THE SOFTWARE.
           return bottom_div.height(_this.root_element.height() - last_element_bottom_edge);
         }), 0);
       };
-      return $(document.body).mouseup(checkHeight).keydown(checkHeight);
+      $(document.body).mouseup(checkHeight).keydown(checkHeight);
+      return this.editor.setValue(value);
+    };
+
+    IceEditor.prototype.melt = function() {
+      var _this = this;
+      if (this.mode !== 'block') {
+        return false;
+      }
+      this.mode = 'transitioning';
+      this.palette.css('border', 'none').animate({
+        width: 'toggle',
+        opacity: 'toggle'
+      }, 1200);
+      this.workspace.animate({
+        'background-color': $.Color('#FFF'),
+        'left': 0,
+        'padding-left': 60
+      }, 1200);
+      this.root_element.find('.ice_segment, .ice_input').andSelf().animate({
+        'border-width': 0,
+        'background-color': 'transparent',
+        'padding': 0,
+        'min-height': 0,
+        'min-width': 0
+      }, 1200, function() {
+        var new_value;
+        _this.workspace.hide();
+        $(_this.editor_el).show();
+        new_value = _this.root.stringify().slice(3).replace(/\n  /g, '\n');
+        _this.editor.setValue(new_value, 1);
+        return _this.mode = 'text';
+      });
+      return this.root_element.find('.ice_segment, .ice_input').css('height', 'auto');
+    };
+
+    IceEditor.prototype.freeze = function() {
+      var inputs, segments,
+        _this = this;
+      if (this.mode !== 'text') {
+        return false;
+      }
+      this.mode = 'transitioning';
+      $(this.editor_el).hide();
+      this.workspace.show();
+      this.setValue(this.editor.getValue());
+      this.workspace.css('background-color', '#FFF').find('.ice_input').each(function() {
+        return $(this).data('_autogrow_check_function')();
+      });
+      segments = this.root_element.find('.ice_segment').andSelf().css({
+        'background-color': 'transparent',
+        'padding': 0,
+        'border-width': 0
+      });
+      inputs = this.root_element.find('.ice_input').css({
+        'background-color': 'transparent'
+      });
+      setTimeout((function() {
+        _this.palette.css('border', '').animate({
+          opacity: 'toggle',
+          width: 'toggle',
+          queue: false
+        }, 1200, function() {
+          return _this.mode = 'block';
+        });
+        _this.workspace.animate({
+          'background-color': '#DDD',
+          'left': 200,
+          'padding-left': 0
+        }, 1200);
+        _this.root_element.find('.ice_inline').each(function() {
+          if ($(this).has('.ice_block').length > 0) {
+            return $(this).data('_ice_line_wrap_function')();
+          }
+        });
+        inputs.animate({
+          'background-color': '#FFF'
+        });
+        return setTimeout((function() {
+          return segments.each(function() {
+            var border, color, padding;
+            $(this).css({
+              'background-color': '',
+              'padding': '',
+              'border-width': ''
+            });
+            color = $(this).css('background-color');
+            padding = $(this).css('padding');
+            border = $(this).css('border-width');
+            $(this).css({
+              'background-color': 'transparent',
+              'padding': 0,
+              'border-width': 0
+            });
+            return $(this).animate({
+              'background-color': color,
+              'padding': padding,
+              'border-width': border
+            }, 1200);
+          });
+        }), 0);
+      }), 100);
+      return true;
     };
 
     return IceEditor;
@@ -922,18 +1091,18 @@ THE SOFTWARE.
 
 
   coffee_operators = {
-    '++': '++',
-    '--': '--',
-    '+': '+',
-    '-': '-',
-    '/': '/',
-    '*': '*',
-    '&&': 'and',
-    '||': 'or',
-    '===': 'is',
-    '!==': 'isnt',
-    '!': 'not',
-    '?': '?'
+    '++': 'c:%v++',
+    '--': 'c:%v--',
+    '+': 'v:%v + %v',
+    '-': 'v:%v - %v',
+    '/': 'v:%v / %v',
+    '*': 'v:%v * %v',
+    '&&': 'v:%v and %v',
+    '||': 'v:%v or %v',
+    '===': 'v:%v is %v',
+    '!==': 'v:%v isnt %v',
+    '!': 'v:not %v',
+    '?': 'v:%v?'
   };
 
   coffee_reserved = ['return', 'break'];
@@ -1030,11 +1199,9 @@ THE SOFTWARE.
       return defrost('cv:(%v)', [blockify(node.body.unwrap())]);
     } else if (node.constructor.name === 'Op') {
       if (node.second) {
-        return defrost("v:%v " + coffee_operators[node.operator] + " %v", [blockify(node.first), blockify(node.second)]);
-      } else if (node.flip) {
-        return defrost("v:%v" + coffee_operators[node.operator], [blockify(node.first)]);
+        return defrost(coffee_operators[node.operator], [blockify(node.first), blockify(node.second)]);
       } else {
-        return defrost("v:" + coffee_operators[node.operator] + " %v", [blockify(node.first)]);
+        return defrost(coffee_operators[node.operator], [blockify(node.first)]);
       }
     } else if (node.constructor.name === 'If') {
       if (node.elseBody != null) {

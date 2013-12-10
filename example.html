@@ -1,6 +1,7 @@
 <html>
   <head>
     <link rel='stylesheet' href='ice/ice.css'/>
+    <script src="vendor/ace/ace.js" type="text/javascript" charset="utf-8"></script>
     <script src="vendor/coffee-script.js"></script>
     <script src="vendor/jquery.min.js"></script>
     <script src="vendor/jquery-ui.min.js"></script>
@@ -8,16 +9,8 @@
     <script src="vendor/autogrow.js"></script>
     <script src="ice/ice.js"></script>
     <script src="example.js"></script>
-    <style>
-      #value {
-        height: 300px;
-        width: 600px;
-      }
-    </style>
   </head>
   <body>
-    <div id="editor">
-    </div>
     <button id="get">
       Melt to CoffeeScript
     </button>
@@ -29,9 +22,9 @@
     </button>
     <button id="run">
       Run
-    </button><br/>
-    Enter CoffeeScript Below:<br/>
-    <textarea id="value"></textarea>
+    </button>
+    <div id="editor">
+    </div>
     </div>
   </body>
 </html>
