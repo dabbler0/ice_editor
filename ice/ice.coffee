@@ -134,8 +134,22 @@ class IceInlineSegment extends IceSegment
     @type = 'inline'
     @accept = accept
     @droppable = true
+    @line_wrapped = false
 
   _reconstruct: -> new IceInlineSegment(@accept)
+
+  stringify: ->
+    if @line_wrapped
+      return '\n  ' + (child.stringify() for child in @children).join('\n').replace(/\n/g, '\n  ')
+    else
+      string = ''
+      for child in @children
+        if typeof child == 'string'
+          string += child
+        else
+          string += child.stringify()
+      return string
+
 
   blockify: ->
     segment = this
@@ -166,31 +180,46 @@ class IceInlineSegment extends IceSegment
     # Append it to us
     block.append input
 
-    big_wrapper = false
+    @line_wrapped = false
     
     # Prepare the indent-for-readability handler
-    checkHeight =  ->
+    lineWrap = =>
+      if @line_wrapped
+        return false
       # This is hacky.
-      setTimeout (->
-        if block.height() > 100 and not big_wrapper
-          # This is hacky.
-          ghost_element = $('<div>')
-          block.after ghost_element
+      ghost_element = $('<div>')
+      block.after ghost_element
 
-          wrapper_div = $('<div>').addClass('ice_big_inline_wrapper')
-          wrapper_div.append block
-          
-          # This is hacky.
-          ghost_element.replaceWith wrapper_div
-          big_wrapper = true
-        else if block.height() < 100 and big_wrapper
-          block.parent().replaceWith block
-          big_wrapper = false), 0
+      wrapper_div = $('<div>').addClass('ice_big_inline_wrapper')
+      wrapper_div.append block
+      
+      # This is hacky.
+      ghost_element.replaceWith wrapper_div
+      @line_wrapped = true
 
-    $(document.body).mouseup(checkHeight).keydown(checkHeight)
+    unWrap = =>
+      if not @line_wrapped
+        return false
+      block.parent().replaceWith block
+      @line_wrapped = false
+
+    checkHeight = =>
+      if (block.height() > 100 or block.has('.ice_block').length > 0) and not @line_wrapped
+        lineWrap()
+      else if (block.height() < 100 and block.has('.ice_block').length == 0) and @line_wrapped
+        unWrap()
+
+    checkHeightDelayed = ->
+      # This is hacky.
+      setTimeout checkHeight, 0
+
+    $(document.body).mouseup(checkHeightDelayed).keydown(checkHeightDelayed)
 
     # This is hacky.
     setTimeout checkHeight, 0
+
+    # This is hacky
+    block.data('_ice_line_wrap_function', lineWrap)
 
     input.autoGrowInput
       comfortZone: 0
@@ -620,7 +649,28 @@ overlap = (a, b) ->
 
 class IceEditor
   constructor: (element, templates, blockifier) ->
+    @mode = 'block'
     @element = $ element
+
+    @editor_el = document.createElement('div')
+    $(@editor_el).css # Ace overrides our class, so we set css here
+      position: 'absolute'
+      display: 'none'
+      top: 0
+      bottom: 0
+      left: 0
+      right: 0
+      'line-height': '20px'
+
+    @element.append @editor_el
+    
+    @editor = ace.edit @editor_el
+    @editor.setTheme 'ace/theme/chrome'
+    @editor.setFontSize 15
+    @editor.getSession().setUseWorker false
+    @editor.getSession().setMode 'ace/mode/coffee'
+    @editor.getSession().setTabSize 2
+    @editor.getSession().setUseSoftTabs true
 
     # Construct the palette
     @palette = $ '<div>'
@@ -651,6 +701,10 @@ class IceEditor
     @root = new IceBlockSegment()
     @root_element = @root.blockify()
     @workspace.append @root_element
+
+    # The color-tester hack. This is hacky.
+    @color_tester = $("<div>").addClass 'color-tester'
+    @element.append @color_tester
     
     bottom_div = @bottom_div = $ '<div>'
     bottom_div.addClass 'ice_root_bottom_div'
@@ -683,8 +737,6 @@ class IceEditor
           # This first-child hack is because we right now require blockifiers to wrap their entire thing in an IceBlock statement... We might want to be a bit more elegant. Or not.
           block = (blockifier tree.stringify()).children[0]
           block.parent = tree.parent
-          console.log 'removed', tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
-          console.log 'so now', tree.parent.children
           $(this).replaceWith block.blockify()
         catch error
           console.log error
@@ -698,7 +750,10 @@ class IceEditor
     @blockifier = blockifier
 
   getValue: ->
-    return @root.stringify()
+    if @mode is 'block'
+      return @root.stringify()
+    else
+      return @editor.getValue()
 
   setValue: (value) ->
     # Destroy everything
@@ -734,7 +789,101 @@ class IceEditor
         bottom_div.height _this.root_element.height() - last_element_bottom_edge), 0
 
     $(document.body).mouseup(checkHeight).keydown(checkHeight)
+    @editor.setValue value
 
+  melt: ->
+    if @mode isnt 'block'
+      return false
+
+    @mode = 'transitioning'
+
+    @palette.css('border', 'none').animate {
+      width: 'toggle'
+      opacity: 'toggle'
+    }, 1200
+    @workspace.animate {
+      'background-color': $.Color('#FFF')
+      'left': 0
+      'padding-left': 60
+    }, 1200
+    @root_element.find('.ice_segment, .ice_input').andSelf().animate {
+      'border-width': 0
+      'background-color': 'transparent'
+      'padding': 0
+      'min-height': 0
+      'min-width': 0
+    }, 1200, =>
+      @workspace.hide()
+      $(@editor_el).show()
+      new_value = @root.stringify()[3..].replace /\n  /g, '\n'
+      @editor.setValue new_value, 1
+      @mode = 'text'
+
+    @root_element.find('.ice_segment, .ice_input').css 'height', 'auto'
+
+  freeze: ->
+    if @mode isnt 'text'
+      return false
+    
+    @mode = 'transitioning'
+
+    $(@editor_el).hide()
+    @workspace.show()
+    @setValue @editor.getValue()
+    @workspace.css('background-color', '#FFF').find('.ice_input').each(->
+      $(this).data('_autogrow_check_function')()
+    )
+    segments = @root_element.find('.ice_segment').andSelf().css
+      'background-color': 'transparent'
+      'padding': 0
+      'border-width': 0
+    inputs = @root_element.find('.ice_input').css(
+      'background-color': 'transparent'
+    )
+
+    setTimeout (=>
+      @palette.css('border', '').animate {
+        opacity: 'toggle'
+        width: 'toggle'
+        queue: false
+      }, 1200, =>
+        @mode = 'block'
+      
+      @workspace.animate {
+        'background-color': '#DDD'
+        'left': 200
+        'padding-left': 0
+      }, 1200
+
+      @root_element.find('.ice_inline').each ->
+        if $(this).has('.ice_block').length > 0
+          $(this).data('_ice_line_wrap_function')()
+
+      inputs.animate
+        'background-color': '#FFF'
+      
+      setTimeout (=>
+        segments.each ->
+          $(this).css
+            'background-color': ''
+            'padding': ''
+            'border-width': ''
+          color = $(this).css 'background-color'
+          padding = $(this).css 'padding'
+          border = $(this).css 'border-width'
+          $(this).css
+            'background-color': 'transparent'
+            'padding': 0
+            'border-width': 0
+          $(this).animate {
+            'background-color': color
+            'padding': padding
+            'border-width': border
+          }, 1200
+      ), 0
+    ), 100 # We pause a bit for aesthetics
+
+    return true
 
 defrost = (frosting, args) ->
   statement = new IceStatement([], frosting[..frosting.indexOf(':')-1])
@@ -802,18 +951,18 @@ defrost = (frosting, args) ->
 
 # Non-exhaustive list of operators
 coffee_operators =
-  '++': '++'
-  '--': '--'
-  '+': '+'
-  '-': '-'
-  '/': '/'
-  '*': '*'
-  '&&': 'and'
-  '||': 'or'
-  '===': 'is'
-  '!==': 'isnt'
-  '!': 'not'
-  '?': '?'
+  '++': 'c:%v++'
+  '--': 'c:%v--'
+  '+': 'v:%v + %v'
+  '-': 'v:%v - %v'
+  '/': 'v:%v / %v'
+  '*': 'v:%v * %v'
+  '&&': 'v:%v and %v'
+  '||': 'v:%v or %v'
+  '===': 'v:%v is %v'
+  '!==': 'v:%v isnt %v'
+  '!': 'v:not %v'
+  '?': 'v:%v?'
 
 coffee_reserved = [
   'return'
@@ -866,11 +1015,9 @@ blockify = (node) ->
     return defrost 'cv:(%v)', [blockify(node.body.unwrap())]
   else if node.constructor.name == 'Op'
     if node.second
-      return defrost "v:%v #{coffee_operators[node.operator]} %v", [blockify(node.first), blockify(node.second)]
-    else if node.flip
-      return defrost "v:%v#{coffee_operators[node.operator]}", [blockify(node.first)]
+      return defrost coffee_operators[node.operator], [blockify(node.first), blockify(node.second)]
     else
-      return defrost "v:#{coffee_operators[node.operator]} %v", [blockify(node.first)]
+      return defrost coffee_operators[node.operator], [blockify(node.first)]
   else if node.constructor.name == 'If'
     if node.elseBody?
       return defrost 'ck:if %v%w\nelse%w', [blockify(node.condition), blockify(node.body), blockify(node.elseBody)]

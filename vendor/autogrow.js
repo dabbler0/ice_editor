@@ -1,5 +1,4 @@
 (function($){
-
     $.fn.autoGrowInput = function(o) {
 
         o = $.extend({
@@ -18,11 +17,6 @@
                     top: -9999,
                     left: -9999,
                     width: 'auto',
-                    fontSize: input.css('fontSize'),
-                    fontFamily: input.css('fontFamily'),
-                    fontWeight: input.css('fontWeight'),
-                    letterSpacing: input.css('letterSpacing'),
-                    whiteSpace: 'nowrap'
                 }),
                 check = function() {
                     if (val === (val = input.val())) {return;}
@@ -50,6 +44,7 @@
             $(this).bind('keyup keydown blur update', check);
             setInterval(check, 10);
 
+            $(this).data('_autogrow_check_function', check);
         });
 
         return this;

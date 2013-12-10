@@ -14,21 +14,18 @@
       comment: ['c:###%w\n###']
     }, coffee_blockify);
     $("#get").click(function() {
-      return $("#value").val(editor.getValue().slice(3).replace(/\n  /g, '\n'));
+      return editor.melt();
     });
     $("#set").click(function() {
-      return editor.setValue($("#value").val());
+      return editor.freeze();
     });
     $("#clear").click(function() {
-      editor.setValue('');
-      return $("#value").val('');
+      return editor.setValue('');
     });
     $("#run").click(function() {
-      $("#value").val(editor.getValue().slice(3).replace(/\n  /g, '\n'));
-      return CoffeeScript["eval"]($("#value").val());
+      return CoffeeScript["eval"](editor.getValue().slice(3).replace(/\n  /g, '\n'));
     });
-    $("#value").val("distance = (a,b) ->\n  d = 0\n  for char, i in a\n    if char isnt b[i]\n      d += 1\n  return d\nalert('Guess the 5-letter secret in 10 guesses!')\nsecret = 'hello'\nfor [1..10]\n  guess = prompt('Guess:')\n  if guess is secret\n    alert('Correct!')\n    break\n  else\n    alert('Nope! You are ' + distance(guess,secret) + ' letters off.')\nalert('The end!')");
-    editor.setValue($("#value").val());
+    editor.setValue("distance = (a,b) ->\n  d = 0\n  for char, i in a\n    if char isnt b[i]\n      d += 1\n  return d\nalert('Guess the 5-letter secret in 10 guesses!')\nsecret = 'hello'\nfor [1..10]\n  guess = prompt('Guess:')\n  if guess is secret\n    alert('Correct!')\n    break\n  else\n    alert('Nope! You are ' + distance(guess,secret) + ' letters off.')\nalert('The end!')");
     return window.editor = editor;
   };
 
