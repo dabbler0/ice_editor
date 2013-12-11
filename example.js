@@ -6,6 +6,7 @@
       math: ['v:%v + %v', 'v:%v - %v', 'v:%v * %v', 'v:%v / %v', 'v:%v == %v', 'v:%v > %v', 'v:%v < %v', 'vc:(%v)'],
       logic: ['v:%v and %v', 'v:%v or %v', 'v:true', 'v:false'],
       control: ['ck:for [1..%v]%w', 'ck:for %v in %v%w', 'ck:for %v, %v in %v%w', 'ck:if %v%w', 'ck:if %v%w\nelse%w'],
+      turtle: ['c:fd(%v)', 'c:bk(%v)', 'c:rt(%v)', 'c:rt(%v, %v)', 'c:lt(%v)', 'c:lt(%v, %v)', 'c:pen(%v)', 'c:pen(%v, %v)', 'c:dot(%v)', 'c:dot(%v, %v)'],
       variables: ['c:%v = %v', 'c:%v += %v', 'c:%v /= %v', 'c:%v -= %v', 'c:%v *= %v', 'c:%v ?= %v'],
       dialogs: ['c:alert(%v)', 'vc:confirm(%v)', 'vc:prompt(%v)'],
       functions: ['v:(%v) ->%w', 'c:%v = %v ->%w', 'cr:return %v', 'vc:%v(%v)'],
@@ -17,7 +18,12 @@
       return editor.toggle();
     });
     $("#run").click(function() {
-      return CoffeeScript["eval"](editor.getValue());
+      var frame;
+      frames[0].location.reload();
+      return frame = $("iframe").load(function() {
+        frames[0].CoffeeScript["eval"](editor.getValue());
+        return frame.unbind("load");
+      });
     });
     editor.setValue("distance = (a,b) ->\n  d = 0\n  for char, i in a\n    if char isnt b[i]\n      d += 1\n  return d\nalert('Guess the 5-letter secret in 10 guesses!')\nsecret = 'hello'\nfor [1..10]\n  guess = prompt('Guess:')\n  if guess is secret\n    alert('Correct!')\n    break\n  else\n    alert('Nope! You are ' + distance(guess,secret) + ' letters off.')\nalert('The end!')");
     return window.editor = editor;

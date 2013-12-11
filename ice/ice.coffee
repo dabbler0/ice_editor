@@ -280,7 +280,7 @@ class IceBlockSegment extends IceSegment
         else
           existentWrapper.replaceWith existentWrapper.children()
         
-        $('.ice_statement').css('outline', '').data('overlapPos', null).draggable 'enable'
+        $('.ice_statement').filter('.ui-draggable').css('outline', '').data('overlapPos', null).draggable 'enable'
         $('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable 'enable'
 
         # Construct the selector element

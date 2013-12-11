@@ -24,6 +24,18 @@ window.onload = ->
       'ck:if %v%w'
       'ck:if %v%w\nelse%w'
     ]
+    turtle: [
+      'c:fd(%v)'
+      'c:bk(%v)'
+      'c:rt(%v)'
+      'c:rt(%v, %v)'
+      'c:lt(%v)'
+      'c:lt(%v, %v)'
+      'c:pen(%v)'
+      'c:pen(%v, %v)'
+      'c:dot(%v)'
+      'c:dot(%v, %v)'
+    ]
     variables: [
       'c:%v = %v'
       'c:%v += %v'
@@ -62,12 +74,15 @@ window.onload = ->
       'c:###%w\n###'
     ]
   }, coffee_blockify)
-
+  
   $("#toggle").click ->
     editor.toggle()
   
   $("#run").click ->
-    CoffeeScript.eval editor.getValue()
+    frames[0].location.reload()
+    frame = $("iframe").load ->
+        frames[0].CoffeeScript.eval editor.getValue()
+        frame.unbind("load")
   
   # Example first program
   editor.setValue """

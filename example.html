@@ -9,16 +9,38 @@
     <script src="vendor/autogrow.js"></script>
     <script src="ice/ice.js"></script>
     <script src="example.js"></script>
+    <style>
+      #left {
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 500px;
+      }
+      #right {
+        right: 0;
+        top: 0;
+        bottom: 0;
+        left: 500px;
+      }
+      #runframe {
+        height: 500px;
+        width: 500px;
+      }
+    </style>
   </head>
   <body>
-    <button id="toggle">
-      Toggle Blocks
-    </button>
-    <button id="run">
-      Run
-    </button>
-    <div id="editor">
+    <div id="left" class="blockish">
+      <iframe id="runframe" class="blockish" src="blank.html"></iframe>
     </div>
+    <div id="right" class="blockish">
+      <button id="toggle">
+        Toggle Blocks
+      </button>
+      <button id="run">
+        Run
+      </button>
+      <div id="editor">
+      </div>
     </div>
   </body>
 </html>
