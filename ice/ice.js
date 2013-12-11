@@ -657,7 +657,8 @@ THE SOFTWARE.
         return segment.children[0] = this.value;
       });
       input.keydown(function(event) {
-        var focal, new_block, new_parent, new_segment, p_prev, prev;
+        var child, focal, new_block, new_parent, new_segment, p_prev, prev, _i, _len, _ref;
+        console.log(segment, segment.parent, segment.parent.type);
         if (event.keyCode === 13 && segment.parent.type === 'block') {
           new_segment = new IceHandwrittenSegment(segment.accepts);
           segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_segment);
@@ -677,30 +678,36 @@ THE SOFTWARE.
           block.parent().remove();
           return false;
         } else if (event.keyCode === 9 && segment.parent.type === 'block') {
-          prev = block.parent().prev().find('.ice_segment').data('ice_tree');
+          p_prev = block.parent().prevAll('.ice_block_command_wrapper:first');
+          prev = p_prev.find('.ice_segment').data('ice_tree');
+          console.log(p_prev, prev);
           if (prev == null) {
             return false;
           }
           segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
-          p_prev = block.parent().prev();
-          if (prev.children[prev.children.length - 1].type === 'block') {
-            prev.children[prev.children.length - 1].children.push(segment);
-            segment.parent = prev.children[prev.children.length - 1];
-            block.parent().detach();
-            p_prev.children().first().find('.ice_block').last().append($('<div>').addClass('ice_block_command_wrapper').append(block));
-          } else {
-            new_parent = new IceBlockSegment();
-            new_parent._trembling = true;
-            new_parent.parent = prev;
-            new_block = new_parent.blockify();
-            block.parent().detach();
-            p_prev.children().first().append(new_block);
-            new_block.append($('<div>').addClass('ice_block_command_wrapper').append(block));
-            new_block.data('trembling', true);
-            prev.children.push(new_parent);
-            new_parent.children.push(segment);
-            segment.parent = new_parent;
+          _ref = prev.children.slice(0).reverse();
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            child = _ref[_i];
+            if (child.type === 'block') {
+              child.children.push(segment);
+              segment.parent = child;
+              block.parent().detach();
+              p_prev.children().children().filter('.ice_block').last().append($('<div>').addClass('ice_block_command_wrapper').append(block));
+              input.focus();
+              return false;
+            }
           }
+          new_parent = new IceBlockSegment();
+          new_parent._trembling = true;
+          new_parent.parent = prev;
+          new_block = new_parent.blockify();
+          block.parent().detach();
+          p_prev.children().first().append(new_block);
+          new_block.append($('<div>').addClass('ice_block_command_wrapper').append(block));
+          new_block.data('trembling', true);
+          prev.children.push(new_parent);
+          new_parent.children.push(segment);
+          segment.parent = new_parent;
           input.focus();
           return false;
         }
@@ -862,6 +869,7 @@ THE SOFTWARE.
           try {
             block = (blockifier(tree.stringify())).children[0];
             block.parent = tree.parent;
+            tree.parent.children.splice(tree.parent.children.indexOf(tree), 1, block);
             return $(this).replaceWith(block.blockify());
           } catch (_error) {
             error = _error;
@@ -881,7 +889,7 @@ THE SOFTWARE.
 
     IceEditor.prototype.getValue = function() {
       if (this.mode === 'block') {
-        return this.root.stringify();
+        return this.root.stringify().slice(3).replace(/\n  /g, '\n');
       } else {
         return this.editor.getValue();
       }
@@ -1023,6 +1031,16 @@ THE SOFTWARE.
         }), 0);
       }), 100);
       return true;
+    };
+
+    IceEditor.prototype.toggle = function() {
+      if (this.mode === 'block') {
+        return this.melt();
+      } else if (this.mode === 'text') {
+        return this.freeze();
+      } else {
+        return false;
+      }
     };
 
     return IceEditor;

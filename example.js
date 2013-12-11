@@ -13,17 +13,11 @@
       objects: ['v:{}', 'v:{%w\n}', 'c:%v: %v', 'v:%v[%v]', 'v:%v.%v'],
       comment: ['c:###%w\n###']
     }, coffee_blockify);
-    $("#get").click(function() {
-      return editor.melt();
-    });
-    $("#set").click(function() {
-      return editor.freeze();
-    });
-    $("#clear").click(function() {
-      return editor.setValue('');
+    $("#toggle").click(function() {
+      return editor.toggle();
     });
     $("#run").click(function() {
-      return CoffeeScript["eval"](editor.getValue().slice(3).replace(/\n  /g, '\n'));
+      return CoffeeScript["eval"](editor.getValue());
     });
     editor.setValue("distance = (a,b) ->\n  d = 0\n  for char, i in a\n    if char isnt b[i]\n      d += 1\n  return d\nalert('Guess the 5-letter secret in 10 guesses!')\nsecret = 'hello'\nfor [1..10]\n  guess = prompt('Guess:')\n  if guess is secret\n    alert('Correct!')\n    break\n  else\n    alert('Nope! You are ' + distance(guess,secret) + ' letters off.')\nalert('The end!')");
     return window.editor = editor;

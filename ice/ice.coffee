@@ -535,6 +535,7 @@ class IceHandwrittenSegment extends IceStatement
       segment.children[0] = this.value
 
     input.keydown (event) ->
+      console.log segment, segment.parent, segment.parent.type
       # Lots of keyboard shortcuts!
       if event.keyCode == 13 and segment.parent.type == 'block'
         # Create a new segment
@@ -567,40 +568,44 @@ class IceHandwrittenSegment extends IceStatement
       
       else if event.keyCode == 9 and segment.parent.type == 'block'
         # See if there's a previous element with a last block
-        prev = block.parent().prev().find('.ice_segment').data('ice_tree')
+        p_prev = block.parent().prevAll('.ice_block_command_wrapper:first')
+        prev = p_prev.find('.ice_segment').data('ice_tree')
+        console.log p_prev, prev
         if not prev?
           return false
         
         # Remove us from our current situation
         segment.parent.children.splice(segment.parent.children.indexOf(segment), 1)
 
-        p_prev = block.parent().prev()
 
-        if prev.children[prev.children.length - 1].type == 'block'
+        for child in prev.children.slice(0).reverse()
           # If there is, append us to it
-          prev.children[prev.children.length - 1].children.push segment
-          segment.parent = prev.children[prev.children.length - 1]
-          block.parent().detach()
-          p_prev.children().first().find('.ice_block').last().append $('<div>').addClass('ice_block_command_wrapper').append block
-        else
-          # Otherwise, make one
-          new_parent = new IceBlockSegment()
-          new_parent._trembling = true
-          new_parent.parent = prev
+          if child.type == 'block'
+            child.children.push segment
+            segment.parent = child
+            block.parent().detach()
+            p_prev.children().children().filter('.ice_block').last().append $('<div>').addClass('ice_block_command_wrapper').append block
+            input.focus()
+            return false
 
-          # Append its element to the statement's element
-          new_block = new_parent.blockify()
-          block.parent().detach()
-          p_prev.children().first().append new_block
-          new_block.append $('<div>').addClass('ice_block_command_wrapper').append block
+        # Otherwise, make one
+        new_parent = new IceBlockSegment()
+        new_parent._trembling = true
+        new_parent.parent = prev
 
-          # Set this for removal later if necessary
-          new_block.data 'trembling', true
+        # Append its element to the statement's element
+        new_block = new_parent.blockify()
+        block.parent().detach()
+        p_prev.children().first().append new_block
+        new_block.append $('<div>').addClass('ice_block_command_wrapper').append block
 
-          # Link it into the tree
-          prev.children.push new_parent
-          new_parent.children.push segment
-          segment.parent = new_parent
+        # Set this for removal later if necessary
+        new_block.data 'trembling', true
+
+        # Link it into the tree
+        prev.children.push new_parent
+        new_parent.children.push segment
+        segment.parent = new_parent
 
         input.focus()
         return false
@@ -737,6 +742,7 @@ class IceEditor
           # This first-child hack is because we right now require blockifiers to wrap their entire thing in an IceBlock statement... We might want to be a bit more elegant. Or not.
           block = (blockifier tree.stringify()).children[0]
           block.parent = tree.parent
+          tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
           $(this).replaceWith block.blockify()
         catch error
           console.log error
@@ -751,7 +757,7 @@ class IceEditor
 
   getValue: ->
     if @mode is 'block'
-      return @root.stringify()
+      return @root.stringify()[3..].replace /\n  /g, '\n'
     else
       return @editor.getValue()
 
@@ -884,6 +890,14 @@ class IceEditor
     ), 100 # We pause a bit for aesthetics
 
     return true
+  
+  toggle: ->
+    if @mode == 'block'
+      @melt()
+    else if @mode == 'text'
+      @freeze()
+    else
+      return false
 
 defrost = (frosting, args) ->
   statement = new IceStatement([], frosting[..frosting.indexOf(':')-1])

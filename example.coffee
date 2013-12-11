@@ -63,17 +63,11 @@ window.onload = ->
     ]
   }, coffee_blockify)
 
-  $("#get").click ->
-    editor.melt()
-  
-  $("#set").click ->
-    editor.freeze()
-
-  $("#clear").click ->
-    editor.setValue ''
+  $("#toggle").click ->
+    editor.toggle()
   
   $("#run").click ->
-    CoffeeScript.eval editor.getValue()[3..].replace /\n  /g, '\n'
+    CoffeeScript.eval editor.getValue()
   
   # Example first program
   editor.setValue """
