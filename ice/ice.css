@@ -145,16 +145,6 @@
   width: 60px !important;
 }
 
-tester {
-  white-space: pre;
-  font-size: inherit;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-  min-width: 20px;
-  min-height: 20px;
-}
-
-.color-tester {
-  position: absolute;
-  left: -9999;
-  top: -9999;
+.ice_selected_highlight {
+  outline: 2px solid #FF0;
 }

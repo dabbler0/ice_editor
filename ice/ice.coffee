@@ -280,7 +280,7 @@ class IceBlockSegment extends IceSegment
         else
           existentWrapper.replaceWith existentWrapper.children()
         
-        $('.ice_statement').filter('.ui-draggable').css('outline', '').data('overlapPos', null).draggable 'enable'
+        $('.ice_statement').filter('.ui-draggable').removeClass('ice_selected_highlight').data('overlapPos', null).draggable 'enable'
         $('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable 'enable'
 
         # Construct the selector element
@@ -305,10 +305,11 @@ class IceBlockSegment extends IceSegment
                   last_child = true_block
                   selected_parents = selected_parents.add this
                 else
-                  true_block.css('outline', ''))
+                  true_block.removeClass('ice_selected_highlight'))
 
             if selected_parents.size() == 1
               selector.remove()
+              last_child.addClass('ice_selected_highlight')
               last_child.find('.ice_statement').draggable 'disable'
               last_child.find('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable 'disable'
               last_child.draggable 'enable'
@@ -322,7 +323,7 @@ class IceBlockSegment extends IceSegment
             selected_parents.each(->
               true_block = $(this).children()
               if true_block.hasClass 'ice_statement'
-                true_block.css('outline', '2px solid #FF0').find('.ice_statement').add(true_block).draggable 'disable'
+                true_block.addClass('ice_selected_highlight').find('.ice_statement').add(true_block).draggable 'disable'
                 true_block.find('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable 'disable'
                 selected_elements.push true_block.data 'ice_tree')
 
@@ -535,7 +536,6 @@ class IceHandwrittenSegment extends IceStatement
       segment.children[0] = this.value
 
     input.keydown (event) ->
-      console.log segment, segment.parent, segment.parent.type
       # Lots of keyboard shortcuts!
       if event.keyCode == 13 and segment.parent.type == 'block'
         # Create a new segment
@@ -570,7 +570,6 @@ class IceHandwrittenSegment extends IceStatement
         # See if there's a previous element with a last block
         p_prev = block.parent().prevAll('.ice_block_command_wrapper:first')
         prev = p_prev.find('.ice_segment').data('ice_tree')
-        console.log p_prev, prev
         if not prev?
           return false
         
@@ -703,6 +702,19 @@ class IceEditor
     # Construct the workspace
     @workspace = $ '<div>'
     @workspace.addClass 'ice_workspace blockish'
+    $(document.body).keydown (event) =>
+      if (!$(event.target).is('input')) and event.keyCode == 8
+        selected = @workspace.find('.ice_selected_element_wrapper')
+        if selected.length > 0
+          children = selected.children()
+          children.each ->
+            moveSegment $(this).children().data('ice_tree'), null
+        else
+          selected = @workspace.find('.ice_selected_highlight')
+        if selected.length > 0
+          if selected.length > 0
+            moveSegment selected.data('ice_tree'), null
+        selected.remove()
     @root = new IceBlockSegment()
     @root_element = @root.blockify()
     @workspace.append @root_element

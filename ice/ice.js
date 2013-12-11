@@ -371,7 +371,7 @@ THE SOFTWARE.
           } else {
             existentWrapper.replaceWith(existentWrapper.children());
           }
-          $('.ice_statement').filter('.ui-draggable').css('outline', '').data('overlapPos', null).draggable('enable');
+          $('.ice_statement').filter('.ui-draggable').removeClass('ice_selected_highlight').data('overlapPos', null).draggable('enable');
           $('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable('enable');
           selector = $('<div>');
           selector.addClass('ice_selector');
@@ -394,12 +394,13 @@ THE SOFTWARE.
                     last_child = true_block;
                     return selected_parents = selected_parents.add(this);
                   } else {
-                    return true_block.css('outline', '');
+                    return true_block.removeClass('ice_selected_highlight');
                   }
                 }
               });
               if (selected_parents.size() === 1) {
                 selector.remove();
+                last_child.addClass('ice_selected_highlight');
                 last_child.find('.ice_statement').draggable('disable');
                 last_child.find('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable('disable');
                 last_child.draggable('enable');
@@ -413,7 +414,7 @@ THE SOFTWARE.
                 var true_block;
                 true_block = $(this).children();
                 if (true_block.hasClass('ice_statement')) {
-                  true_block.css('outline', '2px solid #FF0').find('.ice_statement').add(true_block).draggable('disable');
+                  true_block.addClass('ice_selected_highlight').find('.ice_statement').add(true_block).draggable('disable');
                   true_block.find('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable('disable');
                   return selected_elements.push(true_block.data('ice_tree'));
                 }
@@ -658,7 +659,6 @@ THE SOFTWARE.
       });
       input.keydown(function(event) {
         var child, focal, new_block, new_parent, new_segment, p_prev, prev, _i, _len, _ref;
-        console.log(segment, segment.parent, segment.parent.type);
         if (event.keyCode === 13 && segment.parent.type === 'block') {
           new_segment = new IceHandwrittenSegment(segment.accepts);
           segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_segment);
@@ -680,7 +680,6 @@ THE SOFTWARE.
         } else if (event.keyCode === 9 && segment.parent.type === 'block') {
           p_prev = block.parent().prevAll('.ice_block_command_wrapper:first');
           prev = p_prev.find('.ice_segment').data('ice_tree');
-          console.log(p_prev, prev);
           if (prev == null) {
             return false;
           }
@@ -769,7 +768,8 @@ THE SOFTWARE.
 
   IceEditor = (function() {
     function IceEditor(element, templates, blockifier) {
-      var attempt_reblock, block, blocks, bottom_div, checkHeight, details, section, template, title, _i, _len, _this;
+      var attempt_reblock, block, blocks, bottom_div, checkHeight, details, section, template, title, _i, _len,
+        _this = this;
       this.mode = 'block';
       this.element = $(element);
       this.editor_el = document.createElement('div');
@@ -830,6 +830,26 @@ THE SOFTWARE.
       });
       this.workspace = $('<div>');
       this.workspace.addClass('ice_workspace blockish');
+      $(document.body).keydown(function(event) {
+        var children, selected;
+        if ((!$(event.target).is('input')) && event.keyCode === 8) {
+          selected = _this.workspace.find('.ice_selected_element_wrapper');
+          if (selected.length > 0) {
+            children = selected.children();
+            children.each(function() {
+              return moveSegment($(this).children().data('ice_tree'), null);
+            });
+          } else {
+            selected = _this.workspace.find('.ice_selected_highlight');
+          }
+          if (selected.length > 0) {
+            if (selected.length > 0) {
+              moveSegment(selected.data('ice_tree'), null);
+            }
+          }
+          return selected.remove();
+        }
+      });
       this.root = new IceBlockSegment();
       this.root_element = this.root.blockify();
       this.workspace.append(this.root_element);
