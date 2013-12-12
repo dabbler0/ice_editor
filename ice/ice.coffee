@@ -271,6 +271,9 @@ class IceBlockSegment extends IceSegment
     
     # Blocks allow for the selector element
     block.mousedown (origin_event) ->
+      # "Focus" the editor
+      document.activeElement.blur()
+
       target = $(origin_event.target)
       if target.is(this) or (target.parent().is(this) and target.hasClass('ice_block_command_wrapper')) or target.parent().hasClass('ice_selected_element_wrapper') or target.hasClass('ice_root_bottom_div')
         # Tear down the existent selection
@@ -280,7 +283,7 @@ class IceBlockSegment extends IceSegment
         else
           existentWrapper.replaceWith existentWrapper.children()
         
-        $('.ice_statement').filter('.ui-draggable').removeClass('ice_selected_highlight').data('overlapPos', null).draggable 'enable'
+        $('.ice_statement').filter('.ui-draggable').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).draggable 'enable'
         $('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable 'enable'
 
         # Construct the selector element

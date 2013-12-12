@@ -363,6 +363,7 @@ THE SOFTWARE.
       }
       block.mousedown(function(origin_event) {
         var existentWrapper, selecting, selector, target, _this;
+        document.activeElement.blur();
         target = $(origin_event.target);
         if (target.is(this) || (target.parent().is(this) && target.hasClass('ice_block_command_wrapper')) || target.parent().hasClass('ice_selected_element_wrapper') || target.hasClass('ice_root_bottom_div')) {
           existentWrapper = $('.ice_selected_element_wrapper');
@@ -371,7 +372,7 @@ THE SOFTWARE.
           } else {
             existentWrapper.replaceWith(existentWrapper.children());
           }
-          $('.ice_statement').filter('.ui-draggable').removeClass('ice_selected_highlight').data('overlapPos', null).draggable('enable');
+          $('.ice_statement').filter('.ui-draggable').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).draggable('enable');
           $('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable('enable');
           selector = $('<div>');
           selector.addClass('ice_selector');
