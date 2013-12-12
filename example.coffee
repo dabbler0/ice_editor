@@ -92,16 +92,18 @@ distance = (a,b) ->
     if char isnt b[i]
       d += 1
   return d
-alert('Guess the 5-letter secret in 10 guesses!')
-secret = 'hello'
-for [1..10]
-  guess = prompt('Guess:')
+write('Guess the 5-letter secret in 20 guesses!')
+secret = ''
+for i in [1..5]
+  secret += random('abcdefghijklmnopqrstuvwxyz'.split(''))
+for i in [1..20]
+  await(read(defer(guess)))
   if guess is secret
-    alert('Correct!')
+    write('You got it!')
     break
   else
-    alert('Nope! You are ' + distance(guess,secret) + ' letters off.')
-alert('The end!')
+    write('Nope! You are ' + distance(guess,secret) + ' letters off.')
+write('The secret was: ' + secret)
 """
 
   window.editor = editor

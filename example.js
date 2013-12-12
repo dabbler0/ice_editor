@@ -25,7 +25,7 @@
         return frame.unbind("load");
       });
     });
-    editor.setValue("distance = (a,b) ->\n  d = 0\n  for char, i in a\n    if char isnt b[i]\n      d += 1\n  return d\nalert('Guess the 5-letter secret in 10 guesses!')\nsecret = 'hello'\nfor [1..10]\n  guess = prompt('Guess:')\n  if guess is secret\n    alert('Correct!')\n    break\n  else\n    alert('Nope! You are ' + distance(guess,secret) + ' letters off.')\nalert('The end!')");
+    editor.setValue("distance = (a,b) ->\n  d = 0\n  for char, i in a\n    if char isnt b[i]\n      d += 1\n  return d\nwrite('Guess the 5-letter secret in 20 guesses!')\nsecret = ''\nfor i in [1..5]\n  secret += random('abcdefghijklmnopqrstuvwxyz'.split(''))\nfor i in [1..20]\n  await(read(defer(guess)))\n  if guess is secret\n    write('You got it!')\n    break\n  else\n    write('Nope! You are ' + distance(guess,secret) + ' letters off.')\nwrite('The secret was: ' + secret)");
     return window.editor = editor;
   };
 
