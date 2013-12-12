@@ -769,8 +769,9 @@ THE SOFTWARE.
 
   IceEditor = (function() {
     function IceEditor(element, templates, blockifier) {
-      var attempt_reblock, block, blocks, bottom_div, checkHeight, details, section, template, title, _i, _len,
+      var attempt_reblock, block, blocks, bottom_div, checkHeight, details, keyJustDown, section, template, title, _i, _len,
         _this = this;
+      this.clipboard = [];
       this.mode = 'block';
       this.element = $(element);
       this.editor_el = document.createElement('div');
@@ -831,25 +832,82 @@ THE SOFTWARE.
       });
       this.workspace = $('<div>');
       this.workspace.addClass('ice_workspace blockish');
-      $(document.body).keydown(function(event) {
+      $(document.body).bind('keydown', 'backspace', function() {
         var children, selected;
-        if ((!$(event.target).is('input')) && event.keyCode === 8) {
+        selected = _this.workspace.find('.ice_selected_element_wrapper');
+        if (selected.size() > 0) {
+          children = selected.children();
+          children.each(function() {
+            return moveSegment($(this).children().data('ice_tree'), null);
+          });
+        } else {
+          selected = _this.workspace.find('.ice_selected_highlight');
+          if (selected.size() > 0) {
+            moveSegment(selected.data('ice_tree'), null);
+          }
+        }
+        return selected.remove();
+      });
+      keyJustDown = false;
+      $(document).bind('keydown', 'ctrl+c', function() {
+        var children, selected;
+        if (!keyJustDown) {
           selected = _this.workspace.find('.ice_selected_element_wrapper');
-          if (selected.length > 0) {
+          if (selected.size() > 0) {
+            _this.clipboard.length = 0;
             children = selected.children();
+            _this = _this;
             children.each(function() {
-              return moveSegment($(this).children().data('ice_tree'), null);
+              return _this.clipboard.push($(this).children().data('ice_tree'));
             });
           } else {
             selected = _this.workspace.find('.ice_selected_highlight');
-          }
-          if (selected.length > 0) {
-            if (selected.length > 0) {
-              moveSegment(selected.data('ice_tree'), null);
+            _this.clipboard.length = 0;
+            if (selected.size() > 0) {
+              _this.clipboard.push(selected.first().data('ice_tree'));
             }
           }
-          return selected.remove();
         }
+        keyJustDown = true;
+        return setTimeout((function() {
+          return keyJustDown = false;
+        }), 0);
+      });
+      $(document).bind('keydown', 'ctrl+v', function() {
+        var clones, statement, _j, _len1;
+        if (!keyJustDown) {
+          if (_this.clipboard.length > 0) {
+            clones = (function() {
+              var _j, _len1, _ref, _results;
+              _ref = this.clipboard;
+              _results = [];
+              for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+                statement = _ref[_j];
+                _results.push(statement.clone());
+              }
+              return _results;
+            }).call(_this);
+            blocks = (function() {
+              var _j, _len1, _results;
+              _results = [];
+              for (_j = 0, _len1 = clones.length; _j < _len1; _j++) {
+                statement = clones[_j];
+                _results.push(statement.blockify());
+              }
+              return _results;
+            })();
+            console.log(blocks);
+            for (_j = 0, _len1 = blocks.length; _j < _len1; _j++) {
+              block = blocks[_j];
+              _this.root_element.append($("<div>").addClass("ice_block_command_wrapper").append(block));
+            }
+            moveSegment(clones, _this.root);
+          }
+        }
+        keyJustDown = true;
+        return setTimeout((function() {
+          return keyJustDown = false;
+        }), 0);
       });
       this.root = new IceBlockSegment();
       this.root_element = this.root.blockify();

@@ -656,6 +656,7 @@ overlap = (a, b) ->
 
 class IceEditor
   constructor: (element, templates, blockifier) ->
+    @clipboard = []
     @mode = 'block'
     @element = $ element
 
@@ -705,19 +706,49 @@ class IceEditor
     # Construct the workspace
     @workspace = $ '<div>'
     @workspace.addClass 'ice_workspace blockish'
-    $(document.body).keydown (event) =>
-      if (!$(event.target).is('input')) and event.keyCode == 8
+    $(document.body).bind 'keydown', 'backspace', =>
+      selected = @workspace.find('.ice_selected_element_wrapper')
+      if selected.size() > 0
+        children = selected.children()
+        children.each ->
+          moveSegment $(this).children().data('ice_tree'), null
+      else
+        selected = @workspace.find('.ice_selected_highlight')
+        if selected.size() > 0
+          moveSegment selected.data('ice_tree'), null
+      selected.remove()
+
+    # This is hacky.
+    keyJustDown = false
+    $(document).bind 'keydown', 'ctrl+c', =>
+      if not keyJustDown
         selected = @workspace.find('.ice_selected_element_wrapper')
-        if selected.length > 0
+        if selected.size() > 0
+          @clipboard.length = 0
           children = selected.children()
+          _this = this
           children.each ->
-            moveSegment $(this).children().data('ice_tree'), null
+            _this.clipboard.push $(this).children().data('ice_tree')
         else
           selected = @workspace.find('.ice_selected_highlight')
-        if selected.length > 0
-          if selected.length > 0
-            moveSegment selected.data('ice_tree'), null
-        selected.remove()
+          @clipboard.length = 0
+          if selected.size() > 0
+            @clipboard.push selected.first().data('ice_tree')
+      keyJustDown = true
+      setTimeout (-> keyJustDown = false), 0
+
+    $(document).bind 'keydown', 'ctrl+v', =>
+      if not keyJustDown
+        if @clipboard.length > 0
+          clones = (statement.clone() for statement in @clipboard)
+          blocks = (statement.blockify() for statement in clones)
+          console.log blocks
+          for block in blocks
+            @root_element.append $("<div>").addClass("ice_block_command_wrapper").append block
+          moveSegment clones, @root
+      keyJustDown = true
+      setTimeout (-> keyJustDown = false), 0
+
     @root = new IceBlockSegment()
     @root_element = @root.blockify()
     @workspace.append @root_element
