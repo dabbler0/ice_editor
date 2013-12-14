@@ -208,7 +208,7 @@ THE SOFTWARE.
     function IceInlineSegment(accept, tooltip, options) {
       if (accept == null) {
         accept = function(drop) {
-          return __indexOf.call(drop.syntax_type, 'value') >= 0;
+          return (drop != null) && (drop.syntax_type != null) && __indexOf.call(drop.syntax_type, 'value') >= 0;
         };
       }
       if (tooltip == null) {
@@ -363,7 +363,7 @@ THE SOFTWARE.
       }
       if (accepts == null) {
         accepts = function(drop) {
-          return __indexOf.call(drop.syntax_type, 'value') >= 0;
+          return (drop != null) && (drop.syntax_type != null) && __indexOf.call(drop.syntax_type, 'value') >= 0;
         };
       }
       if (tooltip == null) {

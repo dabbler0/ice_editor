@@ -140,7 +140,7 @@ class IceStaticSegment extends IceSegment
 class IceInlineSegment extends IceSegment
   constructor: (accept, tooltip, options) ->
     # Accept function
-    accept ?= (drop) -> 'value' in drop.syntax_type
+    accept ?= (drop) -> drop? and drop.syntax_type? and 'value' in drop.syntax_type
     
     # Hover hint
     tooltip ?= ''
@@ -278,7 +278,7 @@ class IceMultiSegment extends IceSegment
   constructor: (delimiter, accepts, tooltip) ->
     # Defaults
     delimiter ?= ', '
-    accepts ?= (drop) -> 'value' in drop.syntax_type
+    accepts ?= (drop) -> drop? and drop.syntax_type? and 'value' in drop.syntax_type
     tooltip ?= ''
     
     # Fields
