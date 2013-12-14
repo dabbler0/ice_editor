@@ -140,7 +140,7 @@ class IceStaticSegment extends IceSegment
 class IceInlineSegment extends IceSegment
   constructor: (accept, tooltip, options) ->
     # Accept function
-    accept ?= -> true
+    accept ?= (drop) -> 'value' in drop.syntax_type
     
     # Hover hint
     tooltip ?= ''
@@ -186,6 +186,10 @@ class IceInlineSegment extends IceSegment
     for child in @children
       if child? and typeof child != 'string' and child.constructor.name != 'String'
         block.append child.blockify()
+
+    if @tooltip? and @tooltip.length > 0
+      block.attr 'title', @tooltip
+      #block.tooltip()
 
     # Associate it with us
     block.data 'ice_tree', segment
@@ -274,7 +278,7 @@ class IceMultiSegment extends IceSegment
   constructor: (delimiter, accepts, tooltip) ->
     # Defaults
     delimiter ?= ', '
-    accepts ?= -> true
+    accepts ?= (drop) -> 'value' in drop.syntax_type
     tooltip ?= ''
     
     # Fields
@@ -296,6 +300,10 @@ class IceMultiSegment extends IceSegment
     block = $ '<span>'
     block.addClass 'ice_segment'
     block.addClass 'ice_' + @type
+
+    if @tooltip? and @tooltip.length > 0
+      block.attr 'title', @tooltip
+      #block.tooltip()
 
     for child, i in @children
       if typeof child == 'string'
@@ -341,6 +349,7 @@ class IceBlockSegment extends IceSegment
     block = $ '<div>'
     block.addClass 'ice_segment'
     block.addClass 'ice_' + @type
+
     for child in @children
       if typeof child == 'string'
         block.append child
@@ -506,6 +515,10 @@ class IceStatement extends IceSegment
     block.addClass 'ice_segment'
     block.addClass 'ice_' + @type
     
+    if @tooltip? and @tooltip.length > 0
+      block.attr 'title', @tooltip
+      #block.tooltip()
+
     # Add our syntax type classes
     if @syntax_type?
       for type in @syntax_type

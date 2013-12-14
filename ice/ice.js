@@ -26,6 +26,7 @@ THE SOFTWARE.
   var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, corners, defrost, destructure, genPosData, moveSegment, overlap, quoted_regex, to_frosting,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice;
 
   window.combobox = function(element, source) {
@@ -206,8 +207,8 @@ THE SOFTWARE.
 
     function IceInlineSegment(accept, tooltip, options) {
       if (accept == null) {
-        accept = function() {
-          return true;
+        accept = function(drop) {
+          return __indexOf.call(drop.syntax_type, 'value') >= 0;
         };
       }
       if (tooltip == null) {
@@ -271,6 +272,9 @@ THE SOFTWARE.
         if ((child != null) && typeof child !== 'string' && child.constructor.name !== 'String') {
           block.append(child.blockify());
         }
+      }
+      if ((this.tooltip != null) && this.tooltip.length > 0) {
+        block.attr('title', this.tooltip);
       }
       block.data('ice_tree', segment);
       input = $("<input>");
@@ -358,8 +362,8 @@ THE SOFTWARE.
         delimiter = ', ';
       }
       if (accepts == null) {
-        accepts = function() {
-          return true;
+        accepts = function(drop) {
+          return __indexOf.call(drop.syntax_type, 'value') >= 0;
         };
       }
       if (tooltip == null) {
@@ -397,6 +401,9 @@ THE SOFTWARE.
       block = $('<span>');
       block.addClass('ice_segment');
       block.addClass('ice_' + this.type);
+      if ((this.tooltip != null) && this.tooltip.length > 0) {
+        block.attr('title', this.tooltip);
+      }
       _ref = this.children;
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         child = _ref[i];
@@ -642,6 +649,9 @@ THE SOFTWARE.
       block = $('<div>');
       block.addClass('ice_segment');
       block.addClass('ice_' + this.type);
+      if ((this.tooltip != null) && this.tooltip.length > 0) {
+        block.attr('title', this.tooltip);
+      }
       if (this.syntax_type != null) {
         _ref = this.syntax_type;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {

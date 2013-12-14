@@ -180,3 +180,16 @@
 .ice_multi_button:hover {
   background-color: #BBB;
 }
+
+.ui-tooltip {
+        padding: 8px;
+        position: absolute;
+        z-index: 9999;
+        max-width: 300px;
+        -webkit-box-shadow: 0 0 5px #aaa;
+        box-shadow: 0 0 5px #aaa;
+        background-color: #FFF;
+}
+body .ui-tooltip {
+        border-width: 2px;
+}
