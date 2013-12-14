@@ -299,12 +299,9 @@ class IceMultiSegment extends IceSegment
 
     for child, i in @children
       if typeof child == 'string'
-        # Wrap in an InlineSegment if not already
-        text = child
-        child = @children[i] = new IceInlineSegment(@accepts)
-        child.parent = segment
-        child.children[0] = text
-      block.append child.blockify()
+        block.append child
+      else
+        block.append child.blockify()
       if i < @children.length - 1
         block.append @delimiter
 
@@ -313,7 +310,6 @@ class IceMultiSegment extends IceSegment
       
       # If we need to, add the delimiter
       if segment.children.length > 0
-        segment.children.push segment.delimiter
         $(this).before segment.delimiter
 
       # Append the new element to the block

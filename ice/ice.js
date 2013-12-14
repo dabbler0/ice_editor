@@ -392,7 +392,7 @@ THE SOFTWARE.
     };
 
     IceMultiSegment.prototype.blockify = function() {
-      var block, child, i, segment, text, _i, _len, _ref;
+      var block, child, i, segment, _i, _len, _ref;
       segment = this;
       block = $('<span>');
       block.addClass('ice_segment');
@@ -401,12 +401,10 @@ THE SOFTWARE.
       for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
         child = _ref[i];
         if (typeof child === 'string') {
-          text = child;
-          child = this.children[i] = new IceInlineSegment(this.accepts);
-          child.parent = segment;
-          child.children[0] = text;
+          block.append(child);
+        } else {
+          block.append(child.blockify());
         }
-        block.append(child.blockify());
         if (i < this.children.length - 1) {
           block.append(this.delimiter);
         }
@@ -415,7 +413,6 @@ THE SOFTWARE.
         var new_element;
         new_element = new IceInlineSegment(segment.accepts);
         if (segment.children.length > 0) {
-          segment.children.push(segment.delimiter);
           $(this).before(segment.delimiter);
         }
         new_element.parent = segment;
