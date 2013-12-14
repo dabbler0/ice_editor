@@ -1,6 +1,5 @@
 The Big Todo List
- 3. Auto reblock on text edit
+  1. Auto-insert parentheses where needed
 
 The Little Todo List
- 1. Selected elements copy, delete, paste.
- 2. Preferred operator macros (e.g. 'not' and 'or')
+  1. Make it possible to delete inputs from a multi-input
