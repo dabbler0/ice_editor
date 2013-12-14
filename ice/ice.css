@@ -92,23 +92,24 @@
 .ice_segment ~ .ice_input {
   display: none;
 }
+.ice_segment ~ .combobox-searcher {
+  display: none;
+}
 
 /* Example stuff */
-.ice_syntax_type_cv, .ice_syntax_type_vc {
-  background-color: #BFF;
-}
-
-.ice_syntax_type_v {
+.ice_syntax_type_value {
   background-color: #BFB;
 }
-
-.ice_syntax_type_c {
+.ice_syntax_type_command {
   background-color: #BBF;
 }
-.ice_syntax_type_cr {
+.ice_syntax_type_command.ice_syntax_type_value {
+  background-color: #BFF;
+}
+.ice_syntax_type_command.ice_syntax_type_return {
   background-color: #FBB;
 }
-.ice_syntax_type_ck {
+.ice_syntax_type_control.ice_syntax_type_command {
   background-color: #FFDEA2;
 }
 
@@ -140,4 +141,42 @@
 
 .ice_selected_highlight {
   outline: 2px solid #FF0;
+}
+
+.ui-autocomplete {
+  position: absolute;
+  z-index: 200;
+  background-color: #FFF;
+  border: 1px solid #000;
+  border-radius: 3px;
+  padding-left: 0;
+}
+
+.ui-autocomplete a.ui-state-focus {
+  background-color: #DDD;
+}
+
+.ui-autocomplete li {
+  list-style-type: none;
+}
+
+.combobox-searcher {
+  background-color: transparent;
+  border: none;
+  width: 20px;
+}
+
+.ice_multi_button {
+  background-color: transparent;
+  height: 20px;
+  width: 20px;
+  margin-left: 5px;
+  text-align: center;
+  border-radius: 5px;
+  border: 1px solid #000;
+  cursor: hand;
+}
+
+.ice_multi_button:hover {
+  background-color: #BBB;
 }

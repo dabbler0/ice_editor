@@ -20,6 +20,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 ###
+window.combobox = (element, source) ->
+  console.log 'Comboboxing'
+  element.autocomplete
+    source: source
+    appendTo: element.parent()
+    delay: 0
+    minLength: 0
+    messages:
+      noResults: ''
+      results: -> ''
+  element.after $('<button>').addClass('combobox-searcher').html('&#x25BC;').click ->
+    element.autocomplete 'search', ''
 moveSegment = (mobile, target) ->
   # Move a selection of things
   if mobile.is_selected_wrapper? and mobile.is_selected_wrapper
@@ -39,6 +51,7 @@ moveSegment = (mobile, target) ->
       mobile.parent.children.splice(mobile.parent.children.indexOf(mobile), 1)
       mobile.parent.droppable = true
     else
+      console.log 'Setting droppable of', mobile.parent, 'to true'
       mobile.parent.children.length = 0
       mobile.parent.droppable = true
 
@@ -60,7 +73,6 @@ moveSegment = (mobile, target) ->
 class IceSegment
   constructor: ->
     @parent = null
-    @index = 0
     @children = []
     @type = null
 
@@ -80,7 +92,7 @@ class IceSegment
     copy.type = @type
     copy.children = []
     for child in @children
-      if typeof child == 'string' or child.constructor.name == 'String'
+      if child? and typeof child == 'string' or child.constructor.name == 'String'
         copy.children.push child
       else
         child_clone = child.clone()
@@ -108,7 +120,6 @@ class IceSegment
 class IceStaticSegment extends IceSegment
   constructor: (text) ->
     @parent = null
-    @index = 0
     @children = [text]
     @type = 'static'
 
@@ -119,7 +130,7 @@ class IceStaticSegment extends IceSegment
     block.addClass 'ice_segment'
     block.addClass 'ice_' + @type
     for child in @children
-      if typeof child == 'string' or child.constructor.name == 'String'
+      if child? and typeof child == 'string' or child.constructor.name == 'String'
         block.append child
       else
         block.append child.blockify()
@@ -127,16 +138,30 @@ class IceStaticSegment extends IceSegment
 
 
 class IceInlineSegment extends IceSegment
-  constructor: (accept) ->
+  constructor: (accept, tooltip, options) ->
+    # Accept function
+    accept ?= -> true
+    
+    # Hover hint
+    tooltip ?= ''
+
+    # Dropdown options
+    options ?= []
+    
+    # Set up all the tree things
     @parent = null
-    @index = 0
-    @children = []
+    @children = if options[0]? then [options[0]] else []
     @type = 'inline'
-    @accept = accept
+    
+    # Specific to the IceInlineSegment
     @droppable = true
     @line_wrapped = false
 
-  _reconstruct: -> new IceInlineSegment(@accept)
+    @accept = accept
+    @tooltip = tooltip
+    @options = options
+
+  _reconstruct: -> new IceInlineSegment(@accept, @tooltip, @options)
 
   stringify: ->
     if @line_wrapped
@@ -159,7 +184,7 @@ class IceInlineSegment extends IceSegment
     block.addClass 'ice_segment'
     block.addClass 'ice_' + @type
     for child in @children
-      if typeof child != 'string' and child.constructor.name != 'String'
+      if child? and typeof child != 'string' and child.constructor.name != 'String'
         block.append child.blockify()
 
     # Associate it with us
@@ -179,6 +204,9 @@ class IceInlineSegment extends IceSegment
     
     # Append it to us
     block.append input
+
+    if @options.length > 0
+      combobox(input, @options)
 
     @line_wrapped = false
     
@@ -242,11 +270,65 @@ class IceInlineSegment extends IceSegment
 
     return block
 
+class IceMultiSegment extends IceSegment
+  constructor: (delimiter, accepts, tooltip) ->
+    # Defaults
+    delimiter ?= ', '
+    accepts ?= -> true
+    tooltip ?= ''
+    
+    # Fields
+    @parent = null
+    @children = []
+    @type = 'multi'
+    @delimiter = delimiter
+    @accepts = accepts
+    @tooltip = tooltip
+
+  _reconstruct: -> new IceMultiSegment(@delimiter, @accepts)
+
+  stringify: ->
+    return (child.stringify() for child in @children).join(@delimiter)
+  
+  blockify: ->
+    segment = this
+
+    block = $ '<span>'
+    block.addClass 'ice_segment'
+    block.addClass 'ice_' + @type
+
+    for child, i in @children
+      if typeof child == 'string'
+        # Wrap in an InlineSegment if not already
+        text = child
+        child = @children[i] = new IceInlineSegment(@accepts)
+        child.parent = segment
+        child.children[0] = text
+      block.append child.blockify()
+      if i < @children.length - 1
+        block.append @delimiter
+
+    block.append $('<button>').text('+').addClass('ice_multi_button').click ->
+      new_element = new IceInlineSegment(segment.accepts)
+      
+      # If we need to, add the delimiter
+      if segment.children.length > 0
+        segment.children.push segment.delimiter
+        $(this).before segment.delimiter
+
+      # Append the new element to the block
+      new_element.parent = segment
+      segment.children.push new_element
+
+      # Append it to the element as well
+      $(this).before new_element.blockify()
+
+    return block
+
 
 class IceBlockSegment extends IceSegment
   constructor: ->
     @parent = null
-    @index = 0
     @children = []
     @type = 'block'
     @droppable = true
@@ -401,7 +483,8 @@ class IceBlockSegment extends IceSegment
     return block
 
 class IceStatement extends IceSegment
-  constructor: (template, type) ->
+  constructor: (template, tooltip, type) ->
+    # Tree identification things
     @parent = null
 
     # Clone the template for this children array
@@ -409,12 +492,15 @@ class IceStatement extends IceSegment
     for child in template
       @children.push child.clone()
       child.parent = this
-
+    
+    # Node identification things
     @type = 'statement'
-    @syntax_type = type
     @droppable = true
+    
+    @syntax_type = type
+    @tooltip = tooltip
 
-  _reconstruct: -> new IceStatement([], @syntax_type)
+  _reconstruct: -> new IceStatement([], @tooltip, @syntax_type)
 
   blockify: ->
     segment = this
@@ -423,14 +509,20 @@ class IceStatement extends IceSegment
     block = $ '<div>'
     block.addClass 'ice_segment'
     block.addClass 'ice_' + @type
-    block.addClass 'ice_syntax_type_' + if @syntax_type? then @syntax_type else 'cv'
+    
+    # Add our syntax type classes
+    if @syntax_type?
+      for type in @syntax_type
+        block.addClass 'ice_syntax_type_' + type
+
+    # Recurse to our children
     for child in @children
       if typeof child == 'string'
         block.append child
       else
         block.append child.blockify()
 
-    # Associate it with us
+    # Associate the new block with us
     block.data 'ice_tree', segment
 
     # Create the drop target
@@ -683,12 +775,11 @@ class IceEditor
     # Construct the palette
     @palette = $ '<div>'
     @palette.addClass 'ice_palette blockish'
-    for title, section of templates
+    for category in templates
       details = $('<details>').addClass 'ice_palette_detail'
-      details.append $('<summary>').text title
-      blocks = (defrost template, [] for template in section)
-      for block in blocks
-        details.append $('<div>').addClass('ice_palette_template_wrapper').append block.templateify()
+      details.append $('<summary>').text category.name
+      for own key, block of category.blocks
+        details.append $('<div>').addClass('ice_palette_template_wrapper').append (defrost block).templateify()
       @palette.append details
     @palette.droppable
       greedy: true
@@ -742,7 +833,6 @@ class IceEditor
         if @clipboard.length > 0
           clones = (statement.clone() for statement in @clipboard)
           blocks = (statement.blockify() for statement in clones)
-          console.log blocks
           for block in blocks
             @root_element.append $("<div>").addClass("ice_block_command_wrapper").append block
           moveSegment clones, @root
@@ -780,7 +870,6 @@ class IceEditor
         last_element = _this.root_element.children().filter('.ice_block_command_wrapper, .ice_selected_element_wrapper').last()
         last_element_bottom_edge = if last_element.length > 0 then last_element.position().top + last_element.height() else 5
         bottom_div.height _this.root_element.height() - last_element_bottom_edge), 0
-
     attempt_reblock = ->
       $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(->
         tree = $(this).data 'ice_tree'
@@ -858,6 +947,7 @@ class IceEditor
       'left': 0
       'padding-left': 60
     }, 1200
+    @root_element.find('.combobox-searcher').hide()
     @root_element.find('.ice_segment, .ice_input').andSelf().animate {
       'border-width': 0
       'background-color': 'transparent'
@@ -945,158 +1035,142 @@ class IceEditor
     else
       return false
 
-defrost = (frosting, args) ->
-  statement = new IceStatement([], frosting[..frosting.indexOf(':')-1])
+quoted_regex = /{{((?:\w|\d)*)((?:...)?)}}/g
+defrost = (frosting, sub...) ->
+  # Convenience reassignment
+  tooltip = frosting.tooltip
+  types = frosting.types
+  dict = frosting.dict
+  frosting = frosting.frosting
 
-  frosting = frosting[frosting.indexOf(':')+1..]
+  IceStatement final = new IceStatement([], tooltip, types)
+
+  inlines = {}
+  index = 0
+  found = null
+
+  # Find the escaped sequence
+  while (found = quoted_regex.exec(frosting))?
+    final.children.push new IceStaticSegment(frosting[index...found.index])
+    index = found.index + found[0].length
+    subbed = sub.shift()
+    if found[1] == 'block'
+      if subbed?
+        subbed.parent = final
+        final.children.push subbed
+      else
+        new_block = new IceBlockSegment()
+        final.children.push new_block
+        new_block.parent = final
+
+      if index < frosting.length - 1
+        final.children.push new IceStaticSegment('\n')
+    
+    else if found[2] == '...'
+      inlines[found[1]] = new IceMultiSegment()
+      final.children.push inlines[found[1]]
+      if subbed?
+        for child in subbed
+          new_child = new IceInlineSegment()
+          if child?
+            new_child.children[0] = child
+            child.parent = new_child # This is hacky.
+            new_child.droppable = typeof child is 'string'
+          new_child.parent = inlines[found[1]]
+          inlines[found[1]].children.push new_child
+
+    else
+      inlines[found[1]] = new IceInlineSegment()
+      final.children.push inlines[found[1]]
+      inlines[found[1]].parent = final
+      if subbed?
+        inlines[found[1]].children[0] = subbed
+        inlines[found[1]].droppable = typeof subbed is 'string'
+        subbed.parent = inlines[found[1]] # This is hacky.
   
-  # Parse
-  current = ''
-  escaped = false
-  for char in frosting
-    if escaped
-      if char == '%'
-        current += '%'
-      else if char == 'w'
-        # Finish up the current segment
-        statement.children.push new IceStaticSegment(current)
+  final.children.push new IceStaticSegment(frosting[index...frosting.length])
+  
+  # Add stuff from the dictionary
+  for own key, value of dict
+    inlines[key].tooltip = value.tooltip
+    if 'options' of value and value.options.length > 0
+      inlines[key].options = dict[key].options
+      if inlines[key].children.length == 0
+        inlines[key].children[0] = dict[key].options[0]
 
-        # Make the block
-        argument = args.shift()
-        clone = if argument? then argument.clone() else new IceBlockSegment()
-        clone.parent = statement
-        statement.children.push clone
+  return final
 
-        # Start a new segment
-        current = ''
-      else
-        # Finish up the current element
-        statement.children.push new IceStaticSegment(current)
-        
-        # Make the inline socket
-        inline = null
-        (->
-          _char = char
-          inline = new IceInlineSegment((segment) -> (not segment?) or (not segment.syntax_type?) or _char in segment.syntax_type)
-        )()
+# Parse any indent language into a tree
+destructure = (string) ->
+  lines = string.split('\n')
+  blocks =
+    head: null
+    parent: null
+    depth: -2
+    children: []
+  for line in lines
+    indent = line.length - (line = line.trim()).length
+    if line.length == 0
+      continue
+    new_block =
+      parent: blocks
+      head: line
+      depth: indent
+      children: []
+    while indent <= blocks.depth
+      blocks = blocks.parent
+    blocks.children.push new_block
+    if indent > blocks.depth
+      blocks = new_block
 
-        argument = args.shift()
-        if argument?
-          if typeof argument == 'string'
-            inline.children.push argument
-            inline.droppable = true
-          else
-            argument.parent = inline
-            inline.children.push argument
-            argument.droppable = false
-            inline.droppable = false
-        statement.children.push inline
+  # Virtual unindent at end of file
+  while -2 < blocks.depth
+    blocks = blocks.parent
+  return blocks
 
-        # Start a new segment
-        current = ''
-      escaped = false
-    else
-      if char == '%'
-        escaped = true
-      else
-        current += char
+to_frosting = (structure) ->
+  categories = []
+  all = {}
+  for category in structure.children
+    # Make a new category
+    new_category =
+      name: category.head
+      blocks: {}
 
-  statement.children.push new IceStaticSegment(current)
+    categories.push new_category
 
-  return statement
+    for block in category.children
+      # Make this new block
+      new_block =
+        tooltip: block.head[block.head.indexOf('.')+1...block.head.lastIndexOf('(')].trim()
+        frosting: block.children[0].head
+        types: (type.trim() for type in block.head[block.head.lastIndexOf('(')..][1...-1].split(','))
+        dict: {}
+      
+      nickname = block.head[...block.head.indexOf('.')]
 
-###
-# CoffeeScript blockifier... shouldn't be here by rights
-###
+      new_category.blocks[nickname] = new_block
+      all[nickname] = new_block
 
-# Non-exhaustive list of operators
-coffee_operators =
-  '++': 'c:%v++'
-  '--': 'c:%v--'
-  '+': 'v:%v + %v'
-  '-': 'v:%v - %v'
-  '/': 'v:%v / %v'
-  '*': 'v:%v * %v'
-  '&&': 'v:%v and %v'
-  '||': 'v:%v or %v'
-  '===': 'v:%v is %v'
-  '!==': 'v:%v isnt %v'
-  '!': 'v:not %v'
-  '?': 'v:%v?'
+      # Run through its dictionary definition
+      for line in block.children[0].children
+        [key, value] = line.head.split(':')
+        new_block.dict[key] =
+          tooltip: value
 
-coffee_reserved = [
-  'return'
-  'break'
-]
+        # Add the dropdown options
+        if line.children.length > 0
+          new_block.dict[key].options = (child.head for child in line.children)
+    
+  return {
+    categories: categories
+    all: all
+  }
 
-blockify = (node) ->
-  if node.constructor.name == 'Block'
-    new_block = new IceBlockSegment()
-    for expr in node.expressions
-      child = blockify expr
-      child.parent = new_block
-      new_block.children.push child
-    return new_block
-  else if node.constructor.name == 'Value'
-    if node.properties.length > 0 and node.properties[0].constructor.name == 'Access'
-      return defrost 'v:%v.%v', [blockify(node.base), blockify(node.properties[0].name)]
-    else if node.properties.length > 0 and node.properties[0].constructor.name == 'Index'
-      return defrost 'v:%v[%v]', [blockify(node.base), blockify(node.properties[0].index)]
-    else
-      return blockify node.base
-  else if node.constructor.name == 'Literal'
-    if node.value in coffee_reserved
-      return defrost 'cr:' + node.value.replace(/%/g, '%%'), []
-    else
-      return node.value
-  else if node.constructor.name == 'Call'
-    return defrost 'cv:%v(' + ('%v' for arg in node.args).join(',') + ')', [blockify node.variable].concat(blockify(arg) for arg in node.args)
-  else if node.constructor.name == 'Code'
-    return defrost 'v:(' + ('%v' for param in node.params).join(',') + ') ->%w', (blockify(param) for param in node.params).concat [blockify node.body]
-  else if node.constructor.name == 'Param'
-    return blockify node.name
-  else if node.constructor.name == 'Assign'
-    if node.context? and node.context == 'object'
-      return defrost 'c:%v: %v', [blockify(node.variable), blockify(node.value)]
-    else
-      return defrost "c:%v #{if node.context? then node.context else '='} %v", [blockify(node.variable), blockify(node.value)]
-  else if node.constructor.name == 'For'
-    if node.object
-      return defrost 'ck:for %v of %v%w', [blockify(node.index), blockify(node.source), blockify(node.body)]
-    if node.index
-      return defrost 'ck:for %v, %v in %v%w', [blockify(node.name), blockify(node.index), blockify(node.source), blockify(node.body)]
-    if node.name
-      return defrost 'ck:for %v in %v%w', [blockify(node.name), blockify(node.source), blockify(node.body)]
-    else
-      return defrost 'ck:for %v%w', [blockify(node.source), blockify(node.body)]
-  else if node.constructor.name == 'Range'
-    return defrost (if node.exclusive then 'v:[%v...%v]' else 'v:[%v..%v]'), [blockify(node.from), blockify(node.to)]
-  else if node.constructor.name == 'Parens'
-    return defrost 'cv:(%v)', [blockify(node.body.unwrap())]
-  else if node.constructor.name == 'Op'
-    if node.second
-      return defrost coffee_operators[node.operator], [blockify(node.first), blockify(node.second)]
-    else
-      return defrost coffee_operators[node.operator], [blockify(node.first)]
-  else if node.constructor.name == 'If'
-    if node.elseBody?
-      return defrost 'ck:if %v%w\nelse%w', [blockify(node.condition), blockify(node.body), blockify(node.elseBody)]
-    else
-      return defrost 'ck:if %v%w', [blockify(node.condition), blockify(node.body)]
-  else if node.constructor.name == 'Arr'
-    return defrost 'v:[' + ('%v' for object in node.objects).join(',') + ']', (blockify(object) for object in node.objects)
-  else if node.constructor.name == 'Obj'
-    new_block = new IceBlockSegment()
-    new_block.children.push(blockify(property)) for property in node.properties
-    return defrost 'v:{%w\n}', [new_block]
-  else if node.constructor.name == 'Return'
-    return defrost 'cr:return %v', [blockify(node.expression)]
-  else if node.constructor.name == 'Bool'
-    return node.val
-  else if node.constructor.name == 'Existence'
-    return defrost 'v:%v?', [blockify(node.expression)]
-
-window.IceEditor = IceEditor
-window.coffee_blockify = (str) -> blockify CoffeeScript.nodes str
-window.defrost = defrost
-
+window.ICE =
+  IceEditor: IceEditor
+  IceBlockSegment: IceBlockSegment
+  IceStaticSegment: IceStaticSegment
+  sub: defrost
+  frosting: (str) ->
+    to_frosting destructure str

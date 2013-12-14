@@ -1,0 +1,180 @@
+Math
+  PARENS. Parentheses (value)
+    ({{value}})
+      value: Any value
+  
+  ADD. Add two numbers or strings (value)
+    {{a}} + {{b}}
+      a: Any number or string
+      b: Any number or string
+
+  SUB. Subtract two numbers (value)
+    {{a}} - {{b}}
+      a: Any number
+      b: Any number
+  
+  MUL. Multiply two numbers (value)
+    {{a}} * {{b}}
+      a: Any number
+      b: Any number
+
+  DIV. Divide two numbers (value)
+    {{a}} / {{b}}
+      a: Any number
+      b: Any number
+  
+  IS. Compare two values (value)
+    {{a}} is {{b}}
+      a: Any value
+      b: Any value
+
+  ISNT. Compare two values (value)
+    {{a}} isnt {{b}}
+      a: Any value
+      b: Any value
+
+  AND. And (value)
+    {{a}} and {{b}}
+      a: A boolean (true or false)
+      b: A boolean (true or false)
+
+  OR. Or (value)
+    {{a}} or {{b}}
+      a: A boolean (true or false)
+      b: A boolean (true or false)
+
+  NOT. Not (value)
+    not {{a}}
+      a: A boolean (true or false)
+
+  RANDOM. Get a random value (value)
+    random {{type}}
+      type: A number (random less than n), list (random element of the list), or special string
+        'normal'
+        'uniform'
+        'position'
+        'color'
+        'gray'
+
+Control Structures
+  IF_ELSE. Check if a condition is true (control, command)
+    if {{cond}} {{block}}else {{block}}
+      cond: The condition to check
+
+  IF. Check if a condition is true (control, command)
+    if {{cond}} {{block}}
+      cond: The condition to check
+
+  FOR_OF. Loop over all the properties in an object (control, command)
+    for {{variable}} of {{object}} {{block}}
+      variable: The loop variable
+      object: The object to loop over
+  
+  FOR_IN. Loop over an array (control, command)
+    for {{variable}} in {{array}} {{block}}
+      variable: The loop variable
+      array: The array to loop over
+
+  FOR_IN_INDEX. Loop over an array, keeping track of the index (control, command)
+    for {{variable}}, {{index}} in {{array}} {{block}}
+      variable: The loop variable
+      index: A variable for the index
+      array: The array to loop over
+
+  REPEAT. Repeat something a number of times (control, command)
+    for [1..{{number}}] {{block}}
+      number: The number of times to repeat
+
+  BREAK. Stop a loop immediately (command, return)
+    break
+
+  AWAIT. Wait for something to happen (command)
+    await {{function}} defer {{variable}}
+      function: The function to wait for
+        read
+        readnum
+        readstr
+        done
+      variable: A variable to store the result in
+
+Objects
+  ACCESS. Access a property of an object (value)
+    {{object}}.{{property}}
+      object: The object to access the property from
+      property: The property to access
+
+  INDEX. Access and index of an array or a property of an object (value)
+    {{object}}[{{property}}]
+      object: The object to access the index or property from
+      property: The index or property to access
+
+  DEF_PROPERTY. Add a property to an object (command)
+    {{key}}: {{value}}
+      key: The property to assign
+      value: What to assign the property to
+  
+  OBJECT. A new object (value)
+    {{{block}}}
+
+Variables
+  DEF_VARIABLE. Define or assign a variable (command)
+    {{variable}} = {{value}}
+      variable: The variable name to assign
+      value: The value to assign the variable to
+
+  VAR_ADD. Add to a variable (command)
+    {{variable}} += {{value}}
+      variable: The variable to add to
+      value: What to add to the variable
+
+  VAR_SUB. Subtract from a variable (command)
+    {{variable}} += {{value}}
+      variable: The variable to subtract from
+      value: What to subtract from the variable
+
+  VAR_MUL. Multiply a variable by something (command)
+    {{variable}} += {{value}}
+      variable: The variable to multiply
+      value: What to multiply the variable by
+
+  VAR_DIV. Divide a variable by something (command)
+    {{variable}} += {{value}}
+      variable: The variable to divide
+      value: What divide the variable by
+
+Functions
+  RETURN. Return from the function (command, return)
+    return {{value}}
+      value: The value to return
+
+  RETURN_VOID. Stop a function immediately (command, return)
+    return
+
+  DEFUN. Define a function (value)
+    ({{params...}}) -> {{block}}
+      params: The parameters that this function will be passed
+
+  CALL. Use a function (command, value)
+    {{function}}({{arguments...}})
+      function: The function to use
+      arguments: The values to pass to the function
+
+Arrays
+  EXCLUSIVE_RANGE. Everything between, but not including, two numbers (value)
+    [{{bottom}}...{{top}}]
+      bottom: The lower bound
+      top: The upper bound
+
+  INCLUSIVE_RANGE. Everything between, and including, two numbers (value)
+    [{{bottom}}..{{top}}]
+      bottom: The lower bound
+      top: The upper bound
+
+  ARRAY. A new array (value)
+    [{{values...}}]
+      values: The elements in the array
+
+Turtle
+  WRITE. Write something on the screen (command)
+    write {{text}}
+      text: The text to write

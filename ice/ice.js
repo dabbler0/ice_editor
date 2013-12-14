@@ -23,10 +23,29 @@ THE SOFTWARE.
 
 
 (function() {
-  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceSegment, IceStatement, IceStaticSegment, blockify, coffee_operators, coffee_reserved, corners, defrost, genPosData, moveSegment, overlap,
+  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, corners, defrost, destructure, genPosData, moveSegment, overlap, quoted_regex, to_frosting,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-    __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+    __slice = [].slice;
+
+  window.combobox = function(element, source) {
+    console.log('Comboboxing');
+    element.autocomplete({
+      source: source,
+      appendTo: element.parent(),
+      delay: 0,
+      minLength: 0,
+      messages: {
+        noResults: '',
+        results: function() {
+          return '';
+        }
+      }
+    });
+    return element.after($('<button>').addClass('combobox-searcher').html('&#x25BC;').click(function() {
+      return element.autocomplete('search', '');
+    }));
+  };
 
   moveSegment = function(mobile, target) {
     var child, last_child, _i, _j, _len, _len1, _ref, _ref1;
@@ -53,6 +72,7 @@ THE SOFTWARE.
         mobile.parent.children.splice(mobile.parent.children.indexOf(mobile), 1);
         mobile.parent.droppable = true;
       } else {
+        console.log('Setting droppable of', mobile.parent, 'to true');
         mobile.parent.children.length = 0;
         mobile.parent.droppable = true;
       }
@@ -77,7 +97,6 @@ THE SOFTWARE.
   IceSegment = (function() {
     function IceSegment() {
       this.parent = null;
-      this.index = 0;
       this.children = [];
       this.type = null;
     }
@@ -109,7 +128,7 @@ THE SOFTWARE.
       _ref = this.children;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
-        if (typeof child === 'string' || child.constructor.name === 'String') {
+        if ((child != null) && typeof child === 'string' || child.constructor.name === 'String') {
           copy.children.push(child);
         } else {
           child_clone = child.clone();
@@ -153,7 +172,6 @@ THE SOFTWARE.
 
     function IceStaticSegment(text) {
       this.parent = null;
-      this.index = 0;
       this.children = [text];
       this.type = 'static';
     }
@@ -170,7 +188,7 @@ THE SOFTWARE.
       _ref = this.children;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
-        if (typeof child === 'string' || child.constructor.name === 'String') {
+        if ((child != null) && typeof child === 'string' || child.constructor.name === 'String') {
           block.append(child);
         } else {
           block.append(child.blockify());
@@ -186,18 +204,30 @@ THE SOFTWARE.
   IceInlineSegment = (function(_super) {
     __extends(IceInlineSegment, _super);
 
-    function IceInlineSegment(accept) {
+    function IceInlineSegment(accept, tooltip, options) {
+      if (accept == null) {
+        accept = function() {
+          return true;
+        };
+      }
+      if (tooltip == null) {
+        tooltip = '';
+      }
+      if (options == null) {
+        options = [];
+      }
       this.parent = null;
-      this.index = 0;
-      this.children = [];
+      this.children = options[0] != null ? [options[0]] : [];
       this.type = 'inline';
-      this.accept = accept;
       this.droppable = true;
       this.line_wrapped = false;
+      this.accept = accept;
+      this.tooltip = tooltip;
+      this.options = options;
     }
 
     IceInlineSegment.prototype._reconstruct = function() {
-      return new IceInlineSegment(this.accept);
+      return new IceInlineSegment(this.accept, this.tooltip, this.options);
     };
 
     IceInlineSegment.prototype.stringify = function() {
@@ -238,7 +268,7 @@ THE SOFTWARE.
       _ref = this.children;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
-        if (typeof child !== 'string' && child.constructor.name !== 'String') {
+        if ((child != null) && typeof child !== 'string' && child.constructor.name !== 'String') {
           block.append(child.blockify());
         }
       }
@@ -254,6 +284,9 @@ THE SOFTWARE.
         }
       });
       block.append(input);
+      if (this.options.length > 0) {
+        combobox(input, this.options);
+      }
       this.line_wrapped = false;
       lineWrap = function() {
         var ghost_element, wrapper_div;
@@ -317,12 +350,90 @@ THE SOFTWARE.
 
   })(IceSegment);
 
+  IceMultiSegment = (function(_super) {
+    __extends(IceMultiSegment, _super);
+
+    function IceMultiSegment(delimiter, accepts, tooltip) {
+      if (delimiter == null) {
+        delimiter = ', ';
+      }
+      if (accepts == null) {
+        accepts = function() {
+          return true;
+        };
+      }
+      if (tooltip == null) {
+        tooltip = '';
+      }
+      this.parent = null;
+      this.children = [];
+      this.type = 'multi';
+      this.delimiter = delimiter;
+      this.accepts = accepts;
+      this.tooltip = tooltip;
+    }
+
+    IceMultiSegment.prototype._reconstruct = function() {
+      return new IceMultiSegment(this.delimiter, this.accepts);
+    };
+
+    IceMultiSegment.prototype.stringify = function() {
+      var child;
+      return ((function() {
+        var _i, _len, _ref, _results;
+        _ref = this.children;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          child = _ref[_i];
+          _results.push(child.stringify());
+        }
+        return _results;
+      }).call(this)).join(this.delimiter);
+    };
+
+    IceMultiSegment.prototype.blockify = function() {
+      var block, child, i, segment, text, _i, _len, _ref;
+      segment = this;
+      block = $('<span>');
+      block.addClass('ice_segment');
+      block.addClass('ice_' + this.type);
+      _ref = this.children;
+      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+        child = _ref[i];
+        if (typeof child === 'string') {
+          text = child;
+          child = this.children[i] = new IceInlineSegment(this.accepts);
+          child.parent = segment;
+          child.children[0] = text;
+        }
+        block.append(child.blockify());
+        if (i < this.children.length - 1) {
+          block.append(this.delimiter);
+        }
+      }
+      block.append($('<button>').text('+').addClass('ice_multi_button').click(function() {
+        var new_element;
+        new_element = new IceInlineSegment(segment.accepts);
+        if (segment.children.length > 0) {
+          segment.children.push(segment.delimiter);
+          $(this).before(segment.delimiter);
+        }
+        new_element.parent = segment;
+        segment.children.push(new_element);
+        return $(this).before(new_element.blockify());
+      }));
+      return block;
+    };
+
+    return IceMultiSegment;
+
+  })(IceSegment);
+
   IceBlockSegment = (function(_super) {
     __extends(IceBlockSegment, _super);
 
     function IceBlockSegment() {
       this.parent = null;
-      this.index = 0;
       this.children = [];
       this.type = 'block';
       this.droppable = true;
@@ -509,7 +620,7 @@ THE SOFTWARE.
   IceStatement = (function(_super) {
     __extends(IceStatement, _super);
 
-    function IceStatement(template, type) {
+    function IceStatement(template, tooltip, type) {
       var child, _i, _len;
       this.parent = null;
       this.children = [];
@@ -519,24 +630,31 @@ THE SOFTWARE.
         child.parent = this;
       }
       this.type = 'statement';
-      this.syntax_type = type;
       this.droppable = true;
+      this.syntax_type = type;
+      this.tooltip = tooltip;
     }
 
     IceStatement.prototype._reconstruct = function() {
-      return new IceStatement([], this.syntax_type);
+      return new IceStatement([], this.tooltip, this.syntax_type);
     };
 
     IceStatement.prototype.blockify = function() {
-      var block, child, drop_target, segment, _i, _len, _ref;
+      var block, child, drop_target, segment, type, _i, _j, _len, _len1, _ref, _ref1;
       segment = this;
       block = $('<div>');
       block.addClass('ice_segment');
       block.addClass('ice_' + this.type);
-      block.addClass('ice_syntax_type_' + (this.syntax_type != null ? this.syntax_type : 'cv'));
-      _ref = this.children;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        child = _ref[_i];
+      if (this.syntax_type != null) {
+        _ref = this.syntax_type;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          type = _ref[_i];
+          block.addClass('ice_syntax_type_' + type);
+        }
+      }
+      _ref1 = this.children;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        child = _ref1[_j];
         if (typeof child === 'string') {
           block.append(child);
         } else {
@@ -769,7 +887,7 @@ THE SOFTWARE.
 
   IceEditor = (function() {
     function IceEditor(element, templates, blockifier) {
-      var attempt_reblock, block, blocks, bottom_div, checkHeight, details, keyJustDown, section, template, title, _i, _len,
+      var attempt_reblock, block, bottom_div, category, checkHeight, details, key, keyJustDown, _i, _len, _ref,
         _this = this;
       this.clipboard = [];
       this.mode = 'block';
@@ -794,22 +912,15 @@ THE SOFTWARE.
       this.editor.getSession().setUseSoftTabs(true);
       this.palette = $('<div>');
       this.palette.addClass('ice_palette blockish');
-      for (title in templates) {
-        section = templates[title];
+      for (_i = 0, _len = templates.length; _i < _len; _i++) {
+        category = templates[_i];
         details = $('<details>').addClass('ice_palette_detail');
-        details.append($('<summary>').text(title));
-        blocks = (function() {
-          var _i, _len, _results;
-          _results = [];
-          for (_i = 0, _len = section.length; _i < _len; _i++) {
-            template = section[_i];
-            _results.push(defrost(template, []));
-          }
-          return _results;
-        })();
-        for (_i = 0, _len = blocks.length; _i < _len; _i++) {
-          block = blocks[_i];
-          details.append($('<div>').addClass('ice_palette_template_wrapper').append(block.templateify()));
+        details.append($('<summary>').text(category.name));
+        _ref = category.blocks;
+        for (key in _ref) {
+          if (!__hasProp.call(_ref, key)) continue;
+          block = _ref[key];
+          details.append($('<div>').addClass('ice_palette_template_wrapper').append((defrost(block)).templateify()));
         }
         this.palette.append(details);
       }
@@ -874,15 +985,15 @@ THE SOFTWARE.
         }), 0);
       });
       $(document).bind('keydown', 'ctrl+v', function() {
-        var clones, statement, _j, _len1;
+        var blocks, clones, statement, _j, _len1;
         if (!keyJustDown) {
           if (_this.clipboard.length > 0) {
             clones = (function() {
-              var _j, _len1, _ref, _results;
-              _ref = this.clipboard;
+              var _j, _len1, _ref1, _results;
+              _ref1 = this.clipboard;
               _results = [];
-              for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
-                statement = _ref[_j];
+              for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                statement = _ref1[_j];
                 _results.push(statement.clone());
               }
               return _results;
@@ -896,7 +1007,6 @@ THE SOFTWARE.
               }
               return _results;
             })();
-            console.log(blocks);
             for (_j = 0, _len1 = blocks.length; _j < _len1; _j++) {
               block = blocks[_j];
               _this.root_element.append($("<div>").addClass("ice_block_command_wrapper").append(block));
@@ -957,8 +1067,8 @@ THE SOFTWARE.
         });
       };
       $(document.body).mouseup(checkHeight).mouseup(attempt_reblock).keydown(checkHeight).keydown(function(event) {
-        var _ref;
-        if ((_ref = event.keyCode) === 13 || _ref === 9) {
+        var _ref1;
+        if ((_ref1 = event.keyCode) === 13 || _ref1 === 9) {
           return attempt_reblock();
         }
       });
@@ -1026,6 +1136,7 @@ THE SOFTWARE.
         'left': 0,
         'padding-left': 60
       }, 1200);
+      this.root_element.find('.combobox-searcher').hide();
       this.root_element.find('.ice_segment, .ice_input').andSelf().animate({
         'border-width': 0,
         'background-color': 'transparent',
@@ -1126,230 +1237,182 @@ THE SOFTWARE.
 
   })();
 
-  defrost = function(frosting, args) {
-    var argument, char, clone, current, escaped, inline, statement, _i, _len;
-    statement = new IceStatement([], frosting.slice(0, +(frosting.indexOf(':') - 1) + 1 || 9e9));
-    frosting = frosting.slice(frosting.indexOf(':') + 1);
-    current = '';
-    escaped = false;
-    for (_i = 0, _len = frosting.length; _i < _len; _i++) {
-      char = frosting[_i];
-      if (escaped) {
-        if (char === '%') {
-          current += '%';
-        } else if (char === 'w') {
-          statement.children.push(new IceStaticSegment(current));
-          argument = args.shift();
-          clone = argument != null ? argument.clone() : new IceBlockSegment();
-          clone.parent = statement;
-          statement.children.push(clone);
-          current = '';
+  quoted_regex = /{{((?:\w|\d)*)((?:...)?)}}/g;
+
+  defrost = function() {
+    var child, dict, final, found, frosting, index, inlines, key, new_block, new_child, sub, subbed, tooltip, types, value, _i, _len;
+    frosting = arguments[0], sub = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+    tooltip = frosting.tooltip;
+    types = frosting.types;
+    dict = frosting.dict;
+    frosting = frosting.frosting;
+    IceStatement(final = new IceStatement([], tooltip, types));
+    inlines = {};
+    index = 0;
+    found = null;
+    while ((found = quoted_regex.exec(frosting)) != null) {
+      final.children.push(new IceStaticSegment(frosting.slice(index, found.index)));
+      index = found.index + found[0].length;
+      subbed = sub.shift();
+      if (found[1] === 'block') {
+        if (subbed != null) {
+          subbed.parent = final;
+          final.children.push(subbed);
         } else {
-          statement.children.push(new IceStaticSegment(current));
-          inline = null;
-          (function() {
-            var _char;
-            _char = char;
-            return inline = new IceInlineSegment(function(segment) {
-              return (segment == null) || (segment.syntax_type == null) || __indexOf.call(segment.syntax_type, _char) >= 0;
-            });
-          })();
-          argument = args.shift();
-          if (argument != null) {
-            if (typeof argument === 'string') {
-              inline.children.push(argument);
-              inline.droppable = true;
-            } else {
-              argument.parent = inline;
-              inline.children.push(argument);
-              argument.droppable = false;
-              inline.droppable = false;
+          new_block = new IceBlockSegment();
+          final.children.push(new_block);
+          new_block.parent = final;
+        }
+        if (index < frosting.length - 1) {
+          final.children.push(new IceStaticSegment('\n'));
+        }
+      } else if (found[2] === '...') {
+        inlines[found[1]] = new IceMultiSegment();
+        final.children.push(inlines[found[1]]);
+        if (subbed != null) {
+          for (_i = 0, _len = subbed.length; _i < _len; _i++) {
+            child = subbed[_i];
+            new_child = new IceInlineSegment();
+            if (child != null) {
+              new_child.children[0] = child;
+              child.parent = new_child;
+              new_child.droppable = typeof child === 'string';
             }
+            new_child.parent = inlines[found[1]];
+            inlines[found[1]].children.push(new_child);
           }
-          statement.children.push(inline);
-          current = '';
         }
-        escaped = false;
       } else {
-        if (char === '%') {
-          escaped = true;
-        } else {
-          current += char;
+        inlines[found[1]] = new IceInlineSegment();
+        final.children.push(inlines[found[1]]);
+        inlines[found[1]].parent = final;
+        if (subbed != null) {
+          inlines[found[1]].children[0] = subbed;
+          inlines[found[1]].droppable = typeof subbed === 'string';
+          subbed.parent = inlines[found[1]];
         }
       }
     }
-    statement.children.push(new IceStaticSegment(current));
-    return statement;
+    final.children.push(new IceStaticSegment(frosting.slice(index, frosting.length)));
+    for (key in dict) {
+      if (!__hasProp.call(dict, key)) continue;
+      value = dict[key];
+      inlines[key].tooltip = value.tooltip;
+      if ('options' in value && value.options.length > 0) {
+        inlines[key].options = dict[key].options;
+        if (inlines[key].children.length === 0) {
+          inlines[key].children[0] = dict[key].options[0];
+        }
+      }
+    }
+    return final;
   };
 
-  /*
-  # CoffeeScript blockifier... shouldn't be here by rights
-  */
-
-
-  coffee_operators = {
-    '++': 'c:%v++',
-    '--': 'c:%v--',
-    '+': 'v:%v + %v',
-    '-': 'v:%v - %v',
-    '/': 'v:%v / %v',
-    '*': 'v:%v * %v',
-    '&&': 'v:%v and %v',
-    '||': 'v:%v or %v',
-    '===': 'v:%v is %v',
-    '!==': 'v:%v isnt %v',
-    '!': 'v:not %v',
-    '?': 'v:%v?'
+  destructure = function(string) {
+    var blocks, indent, line, lines, new_block, _i, _len;
+    lines = string.split('\n');
+    blocks = {
+      head: null,
+      parent: null,
+      depth: -2,
+      children: []
+    };
+    for (_i = 0, _len = lines.length; _i < _len; _i++) {
+      line = lines[_i];
+      indent = line.length - (line = line.trim()).length;
+      if (line.length === 0) {
+        continue;
+      }
+      new_block = {
+        parent: blocks,
+        head: line,
+        depth: indent,
+        children: []
+      };
+      while (indent <= blocks.depth) {
+        blocks = blocks.parent;
+      }
+      blocks.children.push(new_block);
+      if (indent > blocks.depth) {
+        blocks = new_block;
+      }
+    }
+    while (-2 < blocks.depth) {
+      blocks = blocks.parent;
+    }
+    return blocks;
   };
 
-  coffee_reserved = ['return', 'break'];
+  to_frosting = function(structure) {
+    var all, block, categories, category, child, key, line, new_block, new_category, nickname, type, value, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3;
+    categories = [];
+    all = {};
+    _ref = structure.children;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      category = _ref[_i];
+      new_category = {
+        name: category.head,
+        blocks: {}
+      };
+      categories.push(new_category);
+      _ref1 = category.children;
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        block = _ref1[_j];
+        new_block = {
+          tooltip: block.head.slice(block.head.indexOf('.') + 1, block.head.lastIndexOf('(')).trim(),
+          frosting: block.children[0].head,
+          types: (function() {
+            var _k, _len2, _ref2, _results;
+            _ref2 = block.head.slice(block.head.lastIndexOf('(')).slice(1, -1).split(',');
+            _results = [];
+            for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+              type = _ref2[_k];
+              _results.push(type.trim());
+            }
+            return _results;
+          })(),
+          dict: {}
+        };
+        nickname = block.head.slice(0, block.head.indexOf('.'));
+        new_category.blocks[nickname] = new_block;
+        all[nickname] = new_block;
+        _ref2 = block.children[0].children;
+        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+          line = _ref2[_k];
+          _ref3 = line.head.split(':'), key = _ref3[0], value = _ref3[1];
+          new_block.dict[key] = {
+            tooltip: value
+          };
+          if (line.children.length > 0) {
+            new_block.dict[key].options = (function() {
+              var _l, _len3, _ref4, _results;
+              _ref4 = line.children;
+              _results = [];
+              for (_l = 0, _len3 = _ref4.length; _l < _len3; _l++) {
+                child = _ref4[_l];
+                _results.push(child.head);
+              }
+              return _results;
+            })();
+          }
+        }
+      }
+    }
+    return {
+      categories: categories,
+      all: all
+    };
+  };
 
-  blockify = function(node) {
-    var arg, child, expr, new_block, object, param, property, _i, _j, _len, _len1, _ref, _ref1, _ref2;
-    if (node.constructor.name === 'Block') {
-      new_block = new IceBlockSegment();
-      _ref = node.expressions;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        expr = _ref[_i];
-        child = blockify(expr);
-        child.parent = new_block;
-        new_block.children.push(child);
-      }
-      return new_block;
-    } else if (node.constructor.name === 'Value') {
-      if (node.properties.length > 0 && node.properties[0].constructor.name === 'Access') {
-        return defrost('v:%v.%v', [blockify(node.base), blockify(node.properties[0].name)]);
-      } else if (node.properties.length > 0 && node.properties[0].constructor.name === 'Index') {
-        return defrost('v:%v[%v]', [blockify(node.base), blockify(node.properties[0].index)]);
-      } else {
-        return blockify(node.base);
-      }
-    } else if (node.constructor.name === 'Literal') {
-      if (_ref1 = node.value, __indexOf.call(coffee_reserved, _ref1) >= 0) {
-        return defrost('cr:' + node.value.replace(/%/g, '%%'), []);
-      } else {
-        return node.value;
-      }
-    } else if (node.constructor.name === 'Call') {
-      return defrost('cv:%v(' + ((function() {
-        var _j, _len1, _ref2, _results;
-        _ref2 = node.args;
-        _results = [];
-        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          arg = _ref2[_j];
-          _results.push('%v');
-        }
-        return _results;
-      })()).join(',') + ')', [blockify(node.variable)].concat((function() {
-        var _j, _len1, _ref2, _results;
-        _ref2 = node.args;
-        _results = [];
-        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          arg = _ref2[_j];
-          _results.push(blockify(arg));
-        }
-        return _results;
-      })()));
-    } else if (node.constructor.name === 'Code') {
-      return defrost('v:(' + ((function() {
-        var _j, _len1, _ref2, _results;
-        _ref2 = node.params;
-        _results = [];
-        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          param = _ref2[_j];
-          _results.push('%v');
-        }
-        return _results;
-      })()).join(',') + ') ->%w', ((function() {
-        var _j, _len1, _ref2, _results;
-        _ref2 = node.params;
-        _results = [];
-        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          param = _ref2[_j];
-          _results.push(blockify(param));
-        }
-        return _results;
-      })()).concat([blockify(node.body)]));
-    } else if (node.constructor.name === 'Param') {
-      return blockify(node.name);
-    } else if (node.constructor.name === 'Assign') {
-      if ((node.context != null) && node.context === 'object') {
-        return defrost('c:%v: %v', [blockify(node.variable), blockify(node.value)]);
-      } else {
-        return defrost("c:%v " + (node.context != null ? node.context : '=') + " %v", [blockify(node.variable), blockify(node.value)]);
-      }
-    } else if (node.constructor.name === 'For') {
-      if (node.object) {
-        return defrost('ck:for %v of %v%w', [blockify(node.index), blockify(node.source), blockify(node.body)]);
-      }
-      if (node.index) {
-        return defrost('ck:for %v, %v in %v%w', [blockify(node.name), blockify(node.index), blockify(node.source), blockify(node.body)]);
-      }
-      if (node.name) {
-        return defrost('ck:for %v in %v%w', [blockify(node.name), blockify(node.source), blockify(node.body)]);
-      } else {
-        return defrost('ck:for %v%w', [blockify(node.source), blockify(node.body)]);
-      }
-    } else if (node.constructor.name === 'Range') {
-      return defrost((node.exclusive ? 'v:[%v...%v]' : 'v:[%v..%v]'), [blockify(node.from), blockify(node.to)]);
-    } else if (node.constructor.name === 'Parens') {
-      return defrost('cv:(%v)', [blockify(node.body.unwrap())]);
-    } else if (node.constructor.name === 'Op') {
-      if (node.second) {
-        return defrost(coffee_operators[node.operator], [blockify(node.first), blockify(node.second)]);
-      } else {
-        return defrost(coffee_operators[node.operator], [blockify(node.first)]);
-      }
-    } else if (node.constructor.name === 'If') {
-      if (node.elseBody != null) {
-        return defrost('ck:if %v%w\nelse%w', [blockify(node.condition), blockify(node.body), blockify(node.elseBody)]);
-      } else {
-        return defrost('ck:if %v%w', [blockify(node.condition), blockify(node.body)]);
-      }
-    } else if (node.constructor.name === 'Arr') {
-      return defrost('v:[' + ((function() {
-        var _j, _len1, _ref2, _results;
-        _ref2 = node.objects;
-        _results = [];
-        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          object = _ref2[_j];
-          _results.push('%v');
-        }
-        return _results;
-      })()).join(',') + ']', (function() {
-        var _j, _len1, _ref2, _results;
-        _ref2 = node.objects;
-        _results = [];
-        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          object = _ref2[_j];
-          _results.push(blockify(object));
-        }
-        return _results;
-      })());
-    } else if (node.constructor.name === 'Obj') {
-      new_block = new IceBlockSegment();
-      _ref2 = node.properties;
-      for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-        property = _ref2[_j];
-        new_block.children.push(blockify(property));
-      }
-      return defrost('v:{%w\n}', [new_block]);
-    } else if (node.constructor.name === 'Return') {
-      return defrost('cr:return %v', [blockify(node.expression)]);
-    } else if (node.constructor.name === 'Bool') {
-      return node.val;
-    } else if (node.constructor.name === 'Existence') {
-      return defrost('v:%v?', [blockify(node.expression)]);
+  window.ICE = {
+    IceEditor: IceEditor,
+    IceBlockSegment: IceBlockSegment,
+    IceStaticSegment: IceStaticSegment,
+    sub: defrost,
+    frosting: function(str) {
+      return to_frosting(destructure(str));
     }
   };
-
-  window.IceEditor = IceEditor;
-
-  window.coffee_blockify = function(str) {
-    return blockify(CoffeeScript.nodes(str));
-  };
-
-  window.defrost = defrost;
 
 }).call(this);
 
