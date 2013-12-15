@@ -59,7 +59,6 @@ moveSegment = (mobile, target) ->
       mobile.parent.children.splice(mobile.parent.children.indexOf(mobile), 1)
       mobile.parent.droppable = true
     else
-      console.log 'Setting droppable of', mobile.parent, 'to true'
       mobile.parent.children.length = 0
       mobile.parent.droppable = true
 
@@ -219,7 +218,6 @@ class IceInlineSegment extends IceSegment
       input.keydown (event) ->
         if event.keyCode is 8 and segment.parent.children.indexOf(segment) is segment.parent.children.length - 1
           if segment.parent.children.length > 1
-            console.log block.prev()
             block.prev().remove()
           segment.parent.children.splice segment.parent.children.indexOf(segment), 1
           block.remove()

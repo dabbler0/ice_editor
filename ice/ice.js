@@ -86,7 +86,6 @@ THE SOFTWARE.
         mobile.parent.children.splice(mobile.parent.children.indexOf(mobile), 1);
         mobile.parent.droppable = true;
       } else {
-        console.log('Setting droppable of', mobile.parent, 'to true');
         mobile.parent.children.length = 0;
         mobile.parent.droppable = true;
       }
@@ -293,7 +292,6 @@ THE SOFTWARE.
       input = $("<input>");
       input.addClass("ice_input");
       if (typeof this.children[0] === 'string') {
-        console.log('Happens before autogrow with', this.children[0]);
         input.val(this.children[0]);
       }
       input.on('keyup blur change', function() {
@@ -305,7 +303,6 @@ THE SOFTWARE.
         input.keydown(function(event) {
           if (event.keyCode === 8 && segment.parent.children.indexOf(segment) === segment.parent.children.length - 1) {
             if (segment.parent.children.length > 1) {
-              console.log(block.prev());
               block.prev().remove();
             }
             segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
