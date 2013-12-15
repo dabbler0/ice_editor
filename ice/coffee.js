@@ -25,7 +25,9 @@
         '||': coffee.OR,
         '===': coffee.IS,
         '!==': coffee.ISNT,
-        '!': coffee.NOT
+        '!': coffee.NOT,
+        '>': coffee.GREATER,
+        '<': coffee.LESSER
       };
       reserved = {
         'return': coffee.RETURN_VOID,

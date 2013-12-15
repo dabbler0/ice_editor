@@ -20,18 +20,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 ###
-window.combobox = (element, source) ->
-  console.log 'Comboboxing'
+combobox = (element, source) ->
+  open = false
   element.autocomplete
     source: source
     appendTo: element.parent()
     delay: 0
     minLength: 0
+    open: -> open = true
+    close: -> open = false
     messages:
       noResults: ''
       results: -> ''
   element.after $('<button>').addClass('combobox-searcher').html('&#x25BC;').click ->
-    element.autocomplete 'search', ''
+    if open
+      element.autocomplete 'close'
+      open = false
+    else
+      open = true
+      element.autocomplete 'search', ''
+
 moveSegment = (mobile, target) ->
   # Move a selection of things
   if mobile.is_selected_wrapper? and mobile.is_selected_wrapper
@@ -206,6 +214,16 @@ class IceInlineSegment extends IceSegment
       if segment.droppable
         segment.children[0] = this.value
     
+    # If we are part of a multibar, bind our delete key to deletion
+    if @parent.type is 'multi'
+      input.keydown (event) ->
+        if event.keyCode is 8 and segment.parent.children.indexOf(segment) is segment.parent.children.length - 1
+          if segment.parent.children.length > 1
+            console.log block.prev()
+            block.prev().remove()
+          segment.parent.children.splice segment.parent.children.indexOf(segment), 1
+          block.remove()
+
     # Append it to us
     block.append input
 
@@ -311,14 +329,14 @@ class IceMultiSegment extends IceSegment
       else
         block.append child.blockify()
       if i < @children.length - 1
-        block.append @delimiter
+        block.append $('<span>').addClass('ice_multi_delimiter').text @delimiter
 
     block.append $('<button>').text('+').addClass('ice_multi_button').click ->
       new_element = new IceInlineSegment(segment.accepts)
       
       # If we need to, add the delimiter
       if segment.children.length > 0
-        $(this).before segment.delimiter
+        $(this).before $('<span>').addClass('ice_multi_delimiter').text segment.delimiter
 
       # Append the new element to the block
       new_element.parent = segment

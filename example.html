@@ -1,5 +1,6 @@
 <html>
   <head>
+    <title> ICE Editor Demo </title>
     <link rel='stylesheet' href='ice/ice.css'/>
     <link rel='stylesheet' href="vendor/tooltipster.css"/>
     <script src="vendor/ace/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -16,15 +17,18 @@
     <style>
       #editor {
         font-size: 15px;
-        height: 600px;
-        width: 100%;
-        position: relative;
+        position: absolute;
+        top: 30px;
+        bottom: 0;
+        left: 0;
+        right: 0;
       }
       #left {
         left: 0;
         top: 0;
         bottom: 0;
         width: 500px;
+        background-color: #CCE6FF;
       }
       #right {
         right: 0;
@@ -32,11 +36,33 @@
         bottom: 0;
         left: 500px;
       }
+      #right_top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 30px;
+        line-height: 30px;
+        right: 0;
+        background-color: #CCE6FF;
+      }
       #runframe {
         height: 500px;
         width: 500px;
         border: none;
         border-bottom: 1px solid #000;
+        background-color: #FFF;
+      }
+      #right_top button {
+        border-radius: 2px;
+        cursor: pointer;
+        background-color: #4c66b2;
+        border: none;
+        height: 25px;
+        vertical-align: center;
+        color: #FFF;
+      }
+      #right_top button:hover {
+        background-color: #00F;
       }
     </style>
   </head>
@@ -45,12 +71,14 @@
       <iframe id="runframe" class="blockish" src="blank.html"></iframe>
     </div>
     <div id="right" class="blockish">
-      <button id="toggle">
-        Toggle Blocks
-      </button>
-      <button id="run">
-        Run
-      </button>
+      <div id="right_top" class="blockish">
+        <button id="toggle">
+          Toggle Blocks
+        </button>
+        <button id="run">
+          Run
+        </button>
+      </div>
       <div id="editor">
       </div>
     </div>

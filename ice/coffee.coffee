@@ -28,6 +28,8 @@ $.ajax
       '===': coffee.IS
       '!==': coffee.ISNT
       '!': coffee.NOT
+      '>': coffee.GREATER
+      '<': coffee.LESSER
 
     reserved =
       'return': coffee.RETURN_VOID

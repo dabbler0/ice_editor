@@ -56,6 +56,16 @@ Math
         'color'
         'gray'
 
+  GREATER. Compare two values (value)
+    {{a}} > {{b}}
+      a: Any number
+      b: Any number
+
+  LESSER. Compare two values (value)
+    {{a}} < {{b}}
+      a: Any n umber
+      b: any number
+
 Control Structures
   IF_ELSE. Check if a condition is true (control, command)
     if {{cond}} {{block}}else {{block}}

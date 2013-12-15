@@ -23,19 +23,26 @@ THE SOFTWARE.
 
 
 (function() {
-  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, corners, defrost, destructure, genPosData, moveSegment, overlap, quoted_regex, to_frosting,
+  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, combobox, corners, defrost, destructure, genPosData, moveSegment, overlap, quoted_regex, to_frosting,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
     __slice = [].slice;
 
-  window.combobox = function(element, source) {
-    console.log('Comboboxing');
+  combobox = function(element, source) {
+    var open;
+    open = false;
     element.autocomplete({
       source: source,
       appendTo: element.parent(),
       delay: 0,
       minLength: 0,
+      open: function() {
+        return open = true;
+      },
+      close: function() {
+        return open = false;
+      },
       messages: {
         noResults: '',
         results: function() {
@@ -44,7 +51,13 @@ THE SOFTWARE.
       }
     });
     return element.after($('<button>').addClass('combobox-searcher').html('&#x25BC;').click(function() {
-      return element.autocomplete('search', '');
+      if (open) {
+        element.autocomplete('close');
+        return open = false;
+      } else {
+        open = true;
+        return element.autocomplete('search', '');
+      }
     }));
   };
 
@@ -287,6 +300,18 @@ THE SOFTWARE.
           return segment.children[0] = this.value;
         }
       });
+      if (this.parent.type === 'multi') {
+        input.keydown(function(event) {
+          if (event.keyCode === 8 && segment.parent.children.indexOf(segment) === segment.parent.children.length - 1) {
+            if (segment.parent.children.length > 1) {
+              console.log(block.prev());
+              block.prev().remove();
+            }
+            segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
+            return block.remove();
+          }
+        });
+      }
       block.append(input);
       if (this.options.length > 0) {
         combobox(input, this.options);
@@ -413,14 +438,14 @@ THE SOFTWARE.
           block.append(child.blockify());
         }
         if (i < this.children.length - 1) {
-          block.append(this.delimiter);
+          block.append($('<span>').addClass('ice_multi_delimiter').text(this.delimiter));
         }
       }
       block.append($('<button>').text('+').addClass('ice_multi_button').click(function() {
         var new_element;
         new_element = new IceInlineSegment(segment.accepts);
         if (segment.children.length > 0) {
-          $(this).before(segment.delimiter);
+          $(this).before($('<span>').addClass('ice_multi_delimiter').text(segment.delimiter));
         }
         new_element.parent = segment;
         segment.children.push(new_element);
