@@ -2,6 +2,10 @@ Math
   PARENS. Parentheses (value)
     ({{value}})
       value: Any value
+
+  NEGATIVE. The negative of a number (value)
+    -{{value}}
+      value: Any number
   
   ADD. Add two numbers or strings (value)
     {{a}} + {{b}}
@@ -98,14 +102,18 @@ Control Structures
   BREAK. Stop a loop immediately (command, return)
     break
 
-  AWAIT. Wait for something to happen (command)
+  AWAIT_DEFER_VAR. Wait for something to happen (command)
     await {{function}} defer {{variable}}
       function: The function to wait for
         read
         readnum
         readstr
-        done
       variable: A variable to store the result in
+  
+  AWAIT_DEFER. Wait for something to happen (command)
+    await {{function}} defer()
+      function: The function to wait for
+        done
 
 Objects
   ACCESS. Access a property of an object (value)
@@ -220,4 +228,8 @@ Turtle
         90
         180
         360
+
+  SPEED. Set the turtle's speed (command)
+    speed {{x}}
+      x: The speed (I'm not actually sure what unit this is)
 

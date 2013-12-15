@@ -7,7 +7,7 @@ fitsAwait = (node) ->
         node.args[0].constructor.name is 'Call' and
         node.args[0].args.length is 1 and
         node.args[0].args[0].constructor.name is 'Call' and
-        #node.args[0].args[0].variable.base.constructor.name is 'Literal' and
+        node.args[0].args[0].variable.base.constructor.name is 'Literal' and
         node.args[0].args[0].variable.base.value is 'defer'
 
 $.ajax
@@ -17,6 +17,12 @@ $.ajax
     window.coffee = coffee.categories
     coffee = coffee.all
     console.log coffee
+
+    argIf = (template, name) ->
+      console.log 'Template with', template
+      return (args) ->
+        if args.length is 1 then sub template, args[0]
+        else sub coffee.CALL, name, args
 
     operators =
       '+': coffee.ADD
@@ -36,18 +42,14 @@ $.ajax
       'break': coffee.BREAK
 
     special_functions =
-      'write': (args) ->
-        if args.length is 1
-          sub coffee.WRITE, args[0]
-        else
-          sub coffee.CALL, 'write', args
-      'random': (args) ->
-        if args.length is 1
-          sub coffee.RANDOM, args[0]
-        else
-          sub coffee.CALL, 'write', args
-
-
+      'write': argIf coffee.WRITE, 'write'
+      'random': argIf coffee.RANDOM, 'random'
+      'fd': argIf coffee.FD, 'fd'
+      'bk': argIf coffee.BK, 'bk'
+      'rt': argIf coffee.RT, 'rt'
+      'lt': argIf coffee.LT, 'lt'
+      'pen': argIf coffee.PEN, 'pen'
+      'speed': argIf coffee.SPEED, 'speed'
 
     blockify = (node) ->
       switch node.constructor.name
@@ -79,8 +81,11 @@ $.ajax
             # Some functions are reserved and parsed specially
             return special_functions[variable] (blockify(arg) for arg in node.args)
           else if fitsAwait node
-            # If we fit await x defer y, use a special block
-            return sub coffee.AWAIT, blockify(node.args[0].variable), blockify(node.args[0].args[0].args[0])
+            if node.args[0].args[0].args.length > 0
+              # If we fit await x defer y, use a special block
+              return sub coffee.AWAIT_DEFER_VAR, blockify(node.args[0].variable), blockify(node.args[0].args[0].args[0])
+            else
+              return sub coffee.AWAIT_DEFER, blockify(node.args[0].variable)
           else
             return sub coffee.CALL, blockify(node.variable), (blockify(arg) for arg in node.args)
 
@@ -106,7 +111,7 @@ $.ajax
             when node.object then sub coffee.FOR_OF, blockify(node.index), blockify(node.source), blockify(node.body)
             when node.index then sub coffee.FOR_IN_INDEX, blockify(node.name), blockify(node.index), blockify(node.source), blockify(node.body)
             when node.name then sub coffee.FOR_IN, blockify(node.name), blockify(node.source), blockify(node.body)
-            else sub coffee.REPEAT, blockify(node.index), blockify(node.source), blockify(node.body)
+            else sub coffee.REPEAT, blockify(node.source.to), blockify(node.body) # This actually loses a lot! Careful now!
 
         when 'Range'
           # [x...y] ranges are inclusive or exclusive
@@ -116,7 +121,8 @@ $.ajax
         when 'Parens' then sub coffee.PARENS, blockify(node.body.unwrap())
         
         when 'Op'
-          if node.second? then sub operators[node.operator], blockify(node.first), blockify(node.second)
+          if not node.second? and node.operator == '-' then sub coffee.NEGATIVE, blockify(node.first) # Hack to deal with this case, since it is two operators at once
+          else if node.second? then sub operators[node.operator], blockify(node.first), blockify(node.second)
           else sub operators[node.operator], blockify(node.first)
 
         when 'If'

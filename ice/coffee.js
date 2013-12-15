@@ -5,17 +5,27 @@
   sub = ICE.sub;
 
   fitsAwait = function(node) {
-    return node.variable.base.value === 'await' && node.args.length === 1 && node.args[0].constructor.name === 'Call' && node.args[0].args.length === 1 && node.args[0].args[0].constructor.name === 'Call' && node.args[0].args[0].variable.base.value === 'defer';
+    return node.variable.base.value === 'await' && node.args.length === 1 && node.args[0].constructor.name === 'Call' && node.args[0].args.length === 1 && node.args[0].args[0].constructor.name === 'Call' && node.args[0].args[0].variable.base.constructor.name === 'Literal' && node.args[0].args[0].variable.base.value === 'defer';
   };
 
   $.ajax({
     url: 'coffee.frost',
     success: function(frosting) {
-      var blockify, coffee, operators, reserved, special_functions;
+      var argIf, blockify, coffee, operators, reserved, special_functions;
       coffee = ICE.frosting(frosting);
       window.coffee = coffee.categories;
       coffee = coffee.all;
       console.log(coffee);
+      argIf = function(template, name) {
+        console.log('Template with', template);
+        return function(args) {
+          if (args.length === 1) {
+            return sub(template, args[0]);
+          } else {
+            return sub(coffee.CALL, name, args);
+          }
+        };
+      };
       operators = {
         '+': coffee.ADD,
         '-': coffee.SUB,
@@ -34,20 +44,14 @@
         'break': coffee.BREAK
       };
       special_functions = {
-        'write': function(args) {
-          if (args.length === 1) {
-            return sub(coffee.WRITE, args[0]);
-          } else {
-            return sub(coffee.CALL, 'write', args);
-          }
-        },
-        'random': function(args) {
-          if (args.length === 1) {
-            return sub(coffee.RANDOM, args[0]);
-          } else {
-            return sub(coffee.CALL, 'write', args);
-          }
-        }
+        'write': argIf(coffee.WRITE, 'write'),
+        'random': argIf(coffee.RANDOM, 'random'),
+        'fd': argIf(coffee.FD, 'fd'),
+        'bk': argIf(coffee.BK, 'bk'),
+        'rt': argIf(coffee.RT, 'rt'),
+        'lt': argIf(coffee.LT, 'lt'),
+        'pen': argIf(coffee.PEN, 'pen'),
+        'speed': argIf(coffee.SPEED, 'speed')
       };
       blockify = function(node) {
         var arg, child, expr, new_block, object, param, property, variable, _i, _j, _len, _len1, _ref, _ref1;
@@ -95,7 +99,11 @@
                 return _results;
               })());
             } else if (fitsAwait(node)) {
-              return sub(coffee.AWAIT, blockify(node.args[0].variable), blockify(node.args[0].args[0].args[0]));
+              if (node.args[0].args[0].args.length > 0) {
+                return sub(coffee.AWAIT_DEFER_VAR, blockify(node.args[0].variable), blockify(node.args[0].args[0].args[0]));
+              } else {
+                return sub(coffee.AWAIT_DEFER, blockify(node.args[0].variable));
+              }
             } else {
               return sub(coffee.CALL, blockify(node.variable), (function() {
                 var _j, _len1, _ref1, _results;
@@ -147,7 +155,7 @@
               case !node.name:
                 return sub(coffee.FOR_IN, blockify(node.name), blockify(node.source), blockify(node.body));
               default:
-                return sub(coffee.REPEAT, blockify(node.index), blockify(node.source), blockify(node.body));
+                return sub(coffee.REPEAT, blockify(node.source.to), blockify(node.body));
             }
             break;
           case 'Range':
@@ -160,7 +168,9 @@
           case 'Parens':
             return sub(coffee.PARENS, blockify(node.body.unwrap()));
           case 'Op':
-            if (node.second != null) {
+            if ((node.second == null) && node.operator === '-') {
+              return sub(coffee.NEGATIVE, blockify(node.first));
+            } else if (node.second != null) {
               return sub(operators[node.operator], blockify(node.first), blockify(node.second));
             } else {
               return sub(operators[node.operator], blockify(node.first));
