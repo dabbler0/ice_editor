@@ -305,7 +305,7 @@ class IceMultiSegment extends IceSegment
     @accepts = accepts
     @tooltip = tooltip
 
-  _reconstruct: -> new IceMultiSegment(@delimiter, @accepts)
+  _reconstruct: -> new IceMultiSegment(@delimiter, @accepts, @tooltip)
 
   stringify: ->
     return (child.stringify() for child in @children).join(@delimiter)
@@ -860,7 +860,10 @@ class IceEditor
           blocks = (statement.blockify() for statement in clones)
           for block in blocks
             @root_element.append $("<div>").addClass("ice_block_command_wrapper").append block
-          moveSegment clones, @root
+          moveSegment {
+            is_selected_wrapper: true
+            elements: clones
+          }, @root.children[@root.children.length - 1]
       keyJustDown = true
       setTimeout (-> keyJustDown = false), 0
 
@@ -1100,6 +1103,7 @@ defrost = (frosting, sub...) ->
           if child?
             new_child.children[0] = child
             child.parent = new_child # This is hacky.
+            child.droppable = false
             new_child.droppable = typeof child is 'string'
           new_child.parent = inlines[found[1]]
           inlines[found[1]].children.push new_child
@@ -1111,6 +1115,7 @@ defrost = (frosting, sub...) ->
       if subbed?
         inlines[found[1]].children[0] = subbed
         inlines[found[1]].droppable = typeof subbed is 'string'
+        subbed.droppable = false
         subbed.parent = inlines[found[1]] # This is hacky.
   
   final.children.push new IceStaticSegment(frosting[index...frosting.length])

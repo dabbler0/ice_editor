@@ -401,7 +401,7 @@ THE SOFTWARE.
     }
 
     IceMultiSegment.prototype._reconstruct = function() {
-      return new IceMultiSegment(this.delimiter, this.accepts);
+      return new IceMultiSegment(this.delimiter, this.accepts, this.tooltip);
     };
 
     IceMultiSegment.prototype.stringify = function() {
@@ -1041,7 +1041,10 @@ THE SOFTWARE.
               block = blocks[_j];
               _this.root_element.append($("<div>").addClass("ice_block_command_wrapper").append(block));
             }
-            moveSegment(clones, _this.root);
+            moveSegment({
+              is_selected_wrapper: true,
+              elements: clones
+            }, _this.root.children[_this.root.children.length - 1]);
           }
         }
         keyJustDown = true;
@@ -1306,6 +1309,7 @@ THE SOFTWARE.
             if (child != null) {
               new_child.children[0] = child;
               child.parent = new_child;
+              child.droppable = false;
               new_child.droppable = typeof child === 'string';
             }
             new_child.parent = inlines[found[1]];
@@ -1319,6 +1323,7 @@ THE SOFTWARE.
         if (subbed != null) {
           inlines[found[1]].children[0] = subbed;
           inlines[found[1]].droppable = typeof subbed === 'string';
+          subbed.droppable = false;
           subbed.parent = inlines[found[1]];
         }
       }
