@@ -188,3 +188,36 @@ Turtle
   WRITE. Write something on the screen (command)
     write {{text}}
       text: The text to write
+
+  FD. Move the turtle forward (command)
+    fd {{pixels}}
+      pixels: The number of pixels to move
+
+  BK. Move the turtle backward (command)
+    bk {{pixels}}
+      pixels: The number of pixels to move
+
+  PEN. Change the turtle's pen color (command)
+    pen {{color}}
+      color: The color to change the pen to
+        red
+        orange
+        yellow
+        green
+        blue
+        purple
+
+  RT. Turn the turtle right (command)
+    rt {{degrees}}
+      degrees: The number of degrees to turn
+        90
+        180
+        360
+
+  LT. Turn the turtle left (command)
+    lt {{degrees}}
+      degrees: The number of degrees to turn
+        90
+        180
+        360
+

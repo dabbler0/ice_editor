@@ -19,11 +19,13 @@
                     width: 'auto',
                 }),
                 check = function() {
+                    var old_val = val;
                     if (val === (val = input.val())) {return;}
 
                     // Enter new content into testSubject
                     var escaped = val.replace(/&/g, '&amp;').replace(/\s/g,'&nbsp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     testSubject.html(escaped);
+                    
 
                     // Calculate new width + whether to change
                     var testerWidth = testSubject.width(),
@@ -31,18 +33,24 @@
                         currentWidth = input.width(),
                         isValidWidthChange = (newWidth < currentWidth && newWidth >= minWidth)
                                              || (newWidth > minWidth && newWidth < o.maxWidth);
+                    
+                    //Hack
+                    if (testerWidth == 0 && val != '') {
+                      val = old_val;
+                      setTimeout(check, 10); //Hack
+                      return;
+                    }
 
                     // Animate width
                     if (isValidWidthChange) {
                         input.width(newWidth);
                     }
-
                 };
             
             input.after(testSubject);
 
-            $(this).bind('keyup keydown blur update', check);
-            setInterval(check, 10);
+            $(this).bind('keyup keydown blur update change', check);
+            setTimeout(check, 0);
 
             $(this).data('_autogrow_check_function', check);
         });

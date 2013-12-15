@@ -208,9 +208,9 @@ class IceInlineSegment extends IceSegment
 
     if typeof @children[0] == 'string'
       input.val @children[0]
-
-    # Bind its keyup handler to us
-    input.keyup ->
+    
+    # Bind mutating events to us
+    input.on 'keyup blur change', ->
       if segment.droppable
         segment.children[0] = this.value
     

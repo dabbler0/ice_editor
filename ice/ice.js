@@ -293,9 +293,10 @@ THE SOFTWARE.
       input = $("<input>");
       input.addClass("ice_input");
       if (typeof this.children[0] === 'string') {
+        console.log('Happens before autogrow with', this.children[0]);
         input.val(this.children[0]);
       }
-      input.keyup(function() {
+      input.on('keyup blur change', function() {
         if (segment.droppable) {
           return segment.children[0] = this.value;
         }
