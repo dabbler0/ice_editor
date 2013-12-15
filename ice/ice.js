@@ -301,7 +301,7 @@ THE SOFTWARE.
       });
       if (this.parent.type === 'multi') {
         input.keydown(function(event) {
-          if (event.keyCode === 8 && segment.parent.children.indexOf(segment) === segment.parent.children.length - 1) {
+          if (event.keyCode === 8 && input.val().length === 0 && segment.parent.children.indexOf(segment) === segment.parent.children.length - 1) {
             if (segment.parent.children.length > 1) {
               block.prev().remove();
             }

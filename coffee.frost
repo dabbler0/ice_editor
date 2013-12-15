@@ -52,7 +52,7 @@ Math
       a: A boolean (true or false)
 
   RANDOM. Get a random value (value)
-    random {{type}}
+    random({{type}})
       type: A number (random less than n), list (random element of the list), or special string
         'normal'
         'uniform'

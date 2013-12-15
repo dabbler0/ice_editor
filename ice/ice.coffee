@@ -216,7 +216,7 @@ class IceInlineSegment extends IceSegment
     # If we are part of a multibar, bind our delete key to deletion
     if @parent.type is 'multi'
       input.keydown (event) ->
-        if event.keyCode is 8 and segment.parent.children.indexOf(segment) is segment.parent.children.length - 1
+        if event.keyCode is 8 and input.val().length == 0 and segment.parent.children.indexOf(segment) is segment.parent.children.length - 1
           if segment.parent.children.length > 1
             block.prev().remove()
           segment.parent.children.splice segment.parent.children.indexOf(segment), 1
