@@ -48,10 +48,57 @@
         'random': argIf(coffee.RANDOM, 'random'),
         'fd': argIf(coffee.FD, 'fd'),
         'bk': argIf(coffee.BK, 'bk'),
-        'rt': argIf(coffee.RT, 'rt'),
-        'lt': argIf(coffee.LT, 'lt'),
-        'pen': argIf(coffee.PEN, 'pen'),
-        'speed': argIf(coffee.SPEED, 'speed')
+        'sin': argIf(coffee.SIN, 'sin'),
+        'cos': argIf(coffee.COS, 'cos'),
+        'speed': argIf(coffee.SPEED, 'speed'),
+        'moveto': function(args) {
+          switch (args.length) {
+            case 2:
+              return sub(coffee.MOVETO, args[0], args[1]);
+            default:
+              return sub(coffee.CALL, 'moveto', args);
+          }
+        },
+        'rt': function(args) {
+          switch (args.length) {
+            case 1:
+              return sub(coffee.RT, args[0]);
+            case 2:
+              return sub(coffee.RT_ARC, args[0], args[1]);
+            default:
+              return sub(coffee.CALL, 'rt', args);
+          }
+        },
+        'lt': function(args) {
+          switch (args.length) {
+            case 1:
+              return sub(coffee.LT, args[0]);
+            case 2:
+              return sub(coffee.LT_ARC, args[0], args[1]);
+            default:
+              return sub(coffee.CALL, 'lt', args);
+          }
+        },
+        'pen': function(args) {
+          switch (args.length) {
+            case 1:
+              return sub(coffee.PEN, args[0]);
+            case 2:
+              return sub(coffee.PEN_THICK, args[0], args[1]);
+            default:
+              return sub(coffee.CALL, 'pen', args);
+          }
+        },
+        'dot': function(args) {
+          switch (args.length) {
+            case 1:
+              return sub(coffee.DOT, args[0]);
+            case 2:
+              return sub(coffee.DOT_SIZE, args[0], args[1]);
+            default:
+              return sub(coffee.CALL, 'dot', args);
+          }
+        }
       };
       blockify = function(node) {
         var arg, child, expr, new_block, object, param, property, variable, _i, _j, _len, _len1, _ref, _ref1;

@@ -46,10 +46,33 @@ $.ajax
       'random': argIf coffee.RANDOM, 'random'
       'fd': argIf coffee.FD, 'fd'
       'bk': argIf coffee.BK, 'bk'
-      'rt': argIf coffee.RT, 'rt'
-      'lt': argIf coffee.LT, 'lt'
-      'pen': argIf coffee.PEN, 'pen'
+      'sin': argIf coffee.SIN, 'sin'
+      'cos': argIf coffee.COS, 'cos'
       'speed': argIf coffee.SPEED, 'speed'
+      'moveto': (args) ->
+        switch args.length
+          when 2 then sub coffee.MOVETO, args[0], args[1]
+          else sub coffee.CALL, 'moveto', args
+      'rt': (args) ->
+        switch args.length
+          when 1 then sub coffee.RT, args[0]
+          when 2 then sub coffee.RT_ARC, args[0], args[1]
+          else sub coffee.CALL, 'rt', args
+      'lt': (args) ->
+        switch args.length
+          when 1 then sub coffee.LT, args[0]
+          when 2 then sub coffee.LT_ARC, args[0], args[1]
+          else sub coffee.CALL, 'lt', args
+      'pen': (args) ->
+        switch args.length
+          when 1 then sub coffee.PEN, args[0]
+          when 2 then sub coffee.PEN_THICK, args[0], args[1]
+          else sub coffee.CALL, 'pen', args
+      'dot': (args) ->
+        switch args.length
+          when 1 then sub coffee.DOT, args[0]
+          when 2 then sub coffee.DOT_SIZE, args[0], args[1]
+          else sub coffee.CALL, 'dot', args
 
     blockify = (node) ->
       switch node.constructor.name

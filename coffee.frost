@@ -70,6 +70,14 @@ Math
       a: Any n umber
       b: any number
 
+  SIN. Trigonometric sine (value)
+    sin({{x}})
+      x: The angle to take the sine of, in degrees
+
+  COS. Trigonometric cosine (value)
+    cos({{x}})
+      x: The angle to take the cosine of, in degrees
+
 Control Structures
   IF_ELSE. Check if a condition is true (control, command)
     if {{cond}} {{block}}else {{block}}
@@ -215,6 +223,17 @@ Turtle
         blue
         purple
 
+  PEN_THICK. Change the turtle's pen color and thickness (command)
+    pen {{color}}, {{thickness}}
+      color: The color to change the pen to
+        red
+        orange
+        yellow
+        green
+        blue
+        purple
+      thickness: The thickness to change the pen to
+
   RT. Turn the turtle right (command)
     rt {{degrees}}
       degrees: The number of degrees to turn
@@ -222,14 +241,67 @@ Turtle
         180
         360
 
+  RT_ARC. Turn the turtle right, tracing out an arc (command)
+    rt {{degrees}}, {{radius}}
+      degrees: The number of degrees to turn
+        90
+        180
+        360
+      radius: The radius of the arc to trace
+      
+
   LT. Turn the turtle left (command)
     lt {{degrees}}
       degrees: The number of degrees to turn
         90
         180
         360
+  
+  LT_ARC. Turn the turtle right, tracing out an arc (command)
+    lt {{degrees}}, {{radius}}
+      degrees: The number of degrees to turn
+        90
+        180
+        360
+      radius: The radius of the arc to trace
+
+  DOT. Have the turtle make a dot (command)
+    dot {{color}}
+      color: The color to make the dot
+        red
+        orange
+        yellow
+        green
+        blue
+        purple
+
+  DOT_SIZE. Have the turtle make a dot of a certain size (command)
+    dot {{color}}, {{size}}
+      color: The color to make the dot
+        red
+        orange
+        yellow
+        green
+        blue
+        purple
+      size: The radius of the dot
 
   SPEED. Set the turtle's speed (command)
     speed {{x}}
       x: The speed (I'm not actually sure what unit this is)
 
+  MOVETO. Move the turtle to specific coordinates (command)
+    moveto {{x}}, {{y}}
+      x: The x-coordinate to move the turtle to
+      y: The y-coordinate to move the turtle to
+  
+  PLAY. Play some music (command)
+    play {{notes}}
+      notes: Musical notes to play, like 'CEG'
+        'A'
+        'B'
+        'C'
+        'D'
+        'E'
+        'F'
+        'G'

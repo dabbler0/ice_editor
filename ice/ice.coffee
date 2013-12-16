@@ -380,14 +380,18 @@ class IceBlockSegment extends IceSegment
       target = $(origin_event.target)
       if target.is(this) or (target.parent().is(this) and target.hasClass('ice_block_command_wrapper')) or target.parent().hasClass('ice_selected_element_wrapper') or target.hasClass('ice_root_bottom_div')
         # Tear down the existent selection
-        existentWrapper = $('.ice_selected_element_wrapper')
+        existentWrapper = $('.ice_selected_element_wrapper').not('.ui-helper, .ui-helper *')
         if existentWrapper.parent().hasClass 'ice_block_command_wrapper'
           existentWrapper.parent().replaceWith existentWrapper.children()
         else
           existentWrapper.replaceWith existentWrapper.children()
         
-        $('.ice_statement').filter('.ui-draggable').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).draggable 'enable'
-        $('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable 'enable'
+        $('.ice_statement.ice_selected_highlight, .ice_selected_highlight .ice_statement').not('.ui-helper *').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).each ->
+          _this = $(this)
+          if _this.data('uiDraggable') then _this.draggable 'enable'
+        $('.ice_selected_highlight .ice_drop_target, .ice_selected_highlight .ice_inline, .ice_selected_highlight .ice_block_drop_target').not('.ui-helper *').each ->
+          _this = $(this)
+          if _this.data('uiDroppable') then _this.droppable 'enable'
 
         # Construct the selector element
         selector = $ '<div>'

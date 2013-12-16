@@ -18,32 +18,24 @@
       #editor {
         font-size: 15px;
         position: absolute;
-        top: 30px;
+        top: 0;
         bottom: 0;
         left: 0;
         right: 0;
       }
       #left {
+        border: none;
         left: 0;
         top: 0;
         bottom: 0;
         width: 500px;
-        background-color: #CCE6FF;
       }
       #right {
+        border: none;
         right: 0;
         top: 0;
         bottom: 0;
         left: 500px;
-      }
-      #right_top {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 30px;
-        line-height: 30px;
-        right: 0;
-        background-color: #CCE6FF;
       }
       #runframe {
         height: 500px;
@@ -52,31 +44,53 @@
         border-bottom: 1px solid #000;
         background-color: #FFF;
       }
-      #right_top button {
-        border-radius: 2px;
+      #toggle, #run {
         cursor: pointer;
         background-color: #4c66b2;
         border: none;
-        height: 25px;
-        vertical-align: center;
         color: #FFF;
+        height: 40px;
+        opacity: 0.5;
+        outline: none;
+        font-size: 18px;
+        z-index: 256;
+        border-bottom-left-radius: 5;
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 0;
       }
-      #right_top button:hover {
+      /*
+      #toggle {
+        border-bottom-left-radius: 5;
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+      #run {
+        position: absolute;
+        top: 0;
+        left: 0;
+        border-bottom-right-radius: 5;
+      }
+      */
+      #toggle:hover, #run:hover {
+        opacity: 1;
         background-color: #00F;
       }
     </style>
   </head>
   <body>
     <div id="left" class="blockish">
-      <iframe id="runframe" class="blockish" src="blank.html"></iframe>
+      <iframe id="runframe" src="blank.html"></iframe>
+      <button id="run">
+        Run
+      </button>
     </div>
     <div id="right" class="blockish">
       <div id="right_top" class="blockish">
         <button id="toggle">
           Toggle Blocks
-        </button>
-        <button id="run">
-          Run
         </button>
       </div>
       <div id="editor">

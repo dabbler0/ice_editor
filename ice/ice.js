@@ -504,14 +504,27 @@ THE SOFTWARE.
         document.activeElement.blur();
         target = $(origin_event.target);
         if (target.is(this) || (target.parent().is(this) && target.hasClass('ice_block_command_wrapper')) || target.parent().hasClass('ice_selected_element_wrapper') || target.hasClass('ice_root_bottom_div')) {
-          existentWrapper = $('.ice_selected_element_wrapper');
+          existentWrapper = $('.ice_selected_element_wrapper').not('.ui-helper, .ui-helper *');
           if (existentWrapper.parent().hasClass('ice_block_command_wrapper')) {
             existentWrapper.parent().replaceWith(existentWrapper.children());
           } else {
             existentWrapper.replaceWith(existentWrapper.children());
           }
-          $('.ice_statement').filter('.ui-draggable').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).draggable('enable');
-          $('.ice_drop_target, .ice_inline, .ice_block_drop_target').droppable('enable');
+          $('.ice_statement.ice_selected_highlight, .ice_selected_highlight .ice_statement').not('.ui-helper *').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).each(function() {
+            var _this;
+            _this = $(this);
+            if (_this.data('uiDraggable')) {
+              return _this.draggable('enable');
+            }
+          });
+          $('.ice_selected_highlight .ice_drop_target, .ice_selected_highlight .ice_inline, .ice_selected_highlight .ice_block_drop_target').not('.ui-helper *').each(function() {
+            var _this;
+            _this = $(this);
+            if (_this.data('uiDroppable')) {
+              return _this.droppable('enable');
+            }
+          });
+          console.log('Good.', $('.ui-helper').size());
           selector = $('<div>');
           selector.addClass('ice_selector');
           selector.data('overlapRerender', true);
