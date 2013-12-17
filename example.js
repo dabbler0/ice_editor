@@ -14,7 +14,7 @@
         return frame.unbind("load");
       });
     });
-    editor.setValue("distance = (a,b) ->\n  d = 0\n  for char, i in a\n    if char isnt b[i]\n      d += 1\n  return d\nwrite('Guess the 5-letter secret in 20 guesses!')\nsecret = ''\nfor i in [1..5]\n  secret += random('abcdefghijklmnopqrstuvwxyz'.split(''))\nfor i in [1..20]\n  await(read(defer(guess)))\n  if guess is secret\n    write('You got it!')\n    break\n  else\n    write('Nope! You are ' + distance(guess,secret) + ' letters off.')\nwrite('The secret was: ' + secret)");
+    editor.setValue("speed Infinity\npen_on = false\nwrite 'Arrow keys to move, space to draw!'\ntick 100, \n  () -> \n    if keyisdown('space') and not pen_on \n      pen random('color')\n      pen_on = true\n    if pen_on and not keyisdown('space') \n      pen 'off'\n      pen_on = false\n    if keyisdown('up') \n      fd 1\n    if keyisdown('down') \n      bk 1\n    if keyisdown('right') \n      rt 1\n    if keyisdown('left') \n      lt 1");
     return window.editor = editor;
   };
 

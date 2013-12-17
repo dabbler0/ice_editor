@@ -12,24 +12,25 @@ window.onload = ->
   
   # Example first program
   editor.setValue """
-distance = (a,b) ->
-  d = 0
-  for char, i in a
-    if char isnt b[i]
-      d += 1
-  return d
-write('Guess the 5-letter secret in 20 guesses!')
-secret = ''
-for i in [1..5]
-  secret += random('abcdefghijklmnopqrstuvwxyz'.split(''))
-for i in [1..20]
-  await(read(defer(guess)))
-  if guess is secret
-    write('You got it!')
-    break
-  else
-    write('Nope! You are ' + distance(guess,secret) + ' letters off.')
-write('The secret was: ' + secret)
+speed Infinity
+pen_on = false
+write 'Arrow keys to move, space to draw!'
+tick 100, 
+  () -> 
+    if keyisdown('space') and not pen_on 
+      pen random('color')
+      pen_on = true
+    if pen_on and not keyisdown('space') 
+      pen 'off'
+      pen_on = false
+    if keyisdown('up') 
+      fd 1
+    if keyisdown('down') 
+      bk 1
+    if keyisdown('right') 
+      rt 1
+    if keyisdown('left') 
+      lt 1
 """
 
   window.editor = editor
