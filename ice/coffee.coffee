@@ -40,6 +40,7 @@ $.ajax
     reserved =
       'return': coffee.RETURN_VOID
       'break': coffee.BREAK
+      'lastmousemove': coffee.LASTMOUSEMOVE
 
     special_functions =
       'write': argIf coffee.WRITE, 'write'
@@ -49,6 +50,9 @@ $.ajax
       'sin': argIf coffee.SIN, 'sin'
       'cos': argIf coffee.COS, 'cos'
       'speed': argIf coffee.SPEED, 'speed'
+      'tick': (args) ->
+        if args.length is 2 then  sub coffee.TICK, args[0], args[1]
+        else sub coffee.CALL, 'tick', args[0]
       'moveto': (args) ->
         switch args.length
           when 2 then sub coffee.MOVETO, args[0], args[1]

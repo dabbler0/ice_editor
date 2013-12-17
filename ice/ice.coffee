@@ -77,6 +77,8 @@ moveSegment = (mobile, target) ->
       target.droppable = mobile.droppable = false
       mobile.parent = target
 
+    console.log target.type, 'therefore', mobile.droppable
+
 class IceSegment
   constructor: ->
     @parent = null
@@ -386,12 +388,12 @@ class IceBlockSegment extends IceSegment
         else
           existentWrapper.replaceWith existentWrapper.children()
         
-        $('.ice_statement.ice_selected_highlight, .ice_selected_highlight .ice_statement').not('.ui-helper *').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).each ->
-          _this = $(this)
-          if _this.data('uiDraggable') then _this.draggable 'enable'
         $('.ice_selected_highlight .ice_drop_target, .ice_selected_highlight .ice_inline, .ice_selected_highlight .ice_block_drop_target').not('.ui-helper *').each ->
           _this = $(this)
           if _this.data('uiDroppable') then _this.droppable 'enable'
+        $('.ice_statement.ice_selected_highlight, .ice_selected_highlight .ice_statement').not('.ui-helper *').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).each ->
+          _this = $(this)
+          if _this.data('uiDraggable') then _this.draggable 'enable'
 
         # Construct the selector element
         selector = $ '<div>'
@@ -428,7 +430,7 @@ class IceBlockSegment extends IceSegment
             
             first = selected_parents.first()
             last = selected_parents.last()
-            selected_parents = first.nextUntil(last).andSelf().add(last)
+            selected_parents = first.nextUntil(last).andSelf().filter('.ice_block_command_wrapper').add(last)
 
             selected_parents.each(->
               true_block = $(this).children()
@@ -460,17 +462,23 @@ class IceBlockSegment extends IceSegment
             selecting = false
         
         _this = $(this)
+
+        children = $(this).children().filter('.ice_block_command_wrapper')
+        childData = []
+        children.each(->
+          childData.push
+            pos: genPosData $(this).children()
+            element: $(this).children()
+        )
         $(document.body).mousemove (event) ->
           if selecting
             corners selector, origin_event, event
             children = _this.children()
-            children.each(->
-              true_block = $(this).children()
-              if true_block.hasClass 'ice_statement'
-                if overlap selector, true_block
-                  true_block.css('outline', '2px solid #FF0')
+            for child in childData
+              if rawOverlap child.pos, genPosData selector
+                  child.element.css('outline', '2px solid #FF0')
                 else
-                  true_block.css('outline', ''))
+                  child.element.css('outline', '')
         
         return false
 
@@ -656,7 +664,7 @@ class IceHandwrittenSegment extends IceStatement
     input.addClass "ice_input"
 
     # Bind its keyup handler to us
-    input.keyup ->
+    input.on 'keyup keydown', ->
       segment.children[0] = this.value
 
     input.keydown (event) ->
@@ -755,17 +763,12 @@ corners = (element, a, b) ->
     height: y[1] - y[0]
 
 genPosData  = (el) ->
-  pos = el.data('overlapPos')
-  if not el.data('overlapRerender')? and el.data('overlapPos')?
-    return pos
-  else
-    pos = {}
-    pos.head = el.offset()
-    pos.tail =
-        left: pos.head.left + el.width()
-        top: pos.head.top + el.height()
-    el.data 'overlapPos', pos
-    return pos
+  pos = {}
+  pos.head = el.offset()
+  pos.tail =
+      left: pos.head.left + el.width()
+      top: pos.head.top + el.height()
+  return pos
 
 
 overlap = (a, b) ->
@@ -774,6 +777,10 @@ overlap = (a, b) ->
 
   # Overlap iff a corner is inside the other rectangle.
   return a_pos.head.left < b_pos.tail.left and b_pos.head.left < a_pos.tail.left and a_pos.head.top < b_pos.tail.top and b_pos.head.top < a_pos.tail.top
+
+rawOverlap = (a_pos, b_pos) ->
+  return a_pos.head.left < b_pos.tail.left and b_pos.head.left < a_pos.tail.left and a_pos.head.top < b_pos.tail.top and b_pos.head.top < a_pos.tail.top
+
 
 class IceEditor
   constructor: (element, templates, blockifier) ->
@@ -903,19 +910,21 @@ class IceEditor
         last_element_bottom_edge = if last_element.length > 0 then last_element.position().top + last_element.height() else 5
         bottom_div.height _this.root_element.height() - last_element_bottom_edge), 0
     attempt_reblock = ->
-      $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(->
-        tree = $(this).data 'ice_tree'
-        try
-          # This first-child hack is because we right now require blockifiers to wrap their entire thing in an IceBlock statement... We might want to be a bit more elegant. Or not.
-          block = (blockifier tree.stringify()).children[0]
-          block.parent = tree.parent
-          tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
-          $(this).replaceWith block.blockify()
-        catch error
-          console.log error
-      )
+      setTimeout (->
+        $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(->
+          tree = $(this).data 'ice_tree'
+          try
+            # This first-child hack is because we right now require blockifiers to wrap their entire thing in an IceBlock statement... We might want to be a bit more elegant. Or not.
+            block = (blockifier tree.stringify()).children[0]
+            block.parent = tree.parent
+            tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
+            $(this).replaceWith block.blockify()
+          catch error
+            console.log error
+        )), 0
 
-    $(document.body).mouseup(checkHeight).mouseup(attempt_reblock).keydown(checkHeight).keydown((event) -> if event.keyCode in [13, 9] then attempt_reblock())
+    $(document.body).on('mouseup keydown', checkHeight).mouseup(attempt_reblock).on('keydown keyup', ((event) -> if event.keyCode in [13, 9] then attempt_reblock()))
+    $(window).resize(checkHeight)
 
     # Append them to the element
     @element.append(@palette).append(@workspace).append @selector
@@ -1195,6 +1204,7 @@ to_frosting = (structure) ->
         # Add the dropdown options
         if line.children.length > 0
           new_block.dict[key].options = (child.head for child in line.children)
+
     
   return {
     categories: categories

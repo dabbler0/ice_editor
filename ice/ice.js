@@ -23,7 +23,7 @@ THE SOFTWARE.
 
 
 (function() {
-  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, combobox, corners, defrost, destructure, genPosData, moveSegment, overlap, quoted_regex, to_frosting,
+  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, combobox, corners, defrost, destructure, genPosData, moveSegment, overlap, quoted_regex, rawOverlap, to_frosting,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
@@ -94,16 +94,17 @@ THE SOFTWARE.
       if (target.type === 'block') {
         target.children.unshift(mobile);
         target.droppable = mobile.droppable = true;
-        return mobile.parent = target;
+        mobile.parent = target;
       } else if (target.type === 'statement' && (target.parent != null)) {
         target.parent.children.splice(target.parent.children.indexOf(target) + 1, 0, mobile);
         target.droppable = mobile.droppable = true;
-        return mobile.parent = target.parent;
+        mobile.parent = target.parent;
       } else if (target.type === 'inline') {
         target.children = [mobile];
         target.droppable = mobile.droppable = false;
-        return mobile.parent = target;
+        mobile.parent = target;
       }
+      return console.log(target.type, 'therefore', mobile.droppable);
     }
   };
 
@@ -500,7 +501,7 @@ THE SOFTWARE.
         }
       }
       block.mousedown(function(origin_event) {
-        var existentWrapper, selecting, selector, target, _this;
+        var childData, children, existentWrapper, selecting, selector, target, _this;
         document.activeElement.blur();
         target = $(origin_event.target);
         if (target.is(this) || (target.parent().is(this) && target.hasClass('ice_block_command_wrapper')) || target.parent().hasClass('ice_selected_element_wrapper') || target.hasClass('ice_root_bottom_div')) {
@@ -510,13 +511,6 @@ THE SOFTWARE.
           } else {
             existentWrapper.replaceWith(existentWrapper.children());
           }
-          $('.ice_statement.ice_selected_highlight, .ice_selected_highlight .ice_statement').not('.ui-helper *').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).each(function() {
-            var _this;
-            _this = $(this);
-            if (_this.data('uiDraggable')) {
-              return _this.draggable('enable');
-            }
-          });
           $('.ice_selected_highlight .ice_drop_target, .ice_selected_highlight .ice_inline, .ice_selected_highlight .ice_block_drop_target').not('.ui-helper *').each(function() {
             var _this;
             _this = $(this);
@@ -524,7 +518,13 @@ THE SOFTWARE.
               return _this.droppable('enable');
             }
           });
-          console.log('Good.', $('.ui-helper').size());
+          $('.ice_statement.ice_selected_highlight, .ice_selected_highlight .ice_statement').not('.ui-helper *').css('outline', '').removeClass('ice_selected_highlight').data('overlapPos', null).each(function() {
+            var _this;
+            _this = $(this);
+            if (_this.data('uiDraggable')) {
+              return _this.draggable('enable');
+            }
+          });
           selector = $('<div>');
           selector.addClass('ice_selector');
           selector.data('overlapRerender', true);
@@ -561,7 +561,7 @@ THE SOFTWARE.
               }
               first = selected_parents.first();
               last = selected_parents.last();
-              selected_parents = first.nextUntil(last).andSelf().add(last);
+              selected_parents = first.nextUntil(last).andSelf().filter('.ice_block_command_wrapper').add(last);
               selected_parents.each(function() {
                 var true_block;
                 true_block = $(this).children();
@@ -596,22 +596,29 @@ THE SOFTWARE.
             }
           });
           _this = $(this);
+          children = $(this).children().filter('.ice_block_command_wrapper');
+          childData = [];
+          children.each(function() {
+            return childData.push({
+              pos: genPosData($(this).children()),
+              element: $(this).children()
+            });
+          });
           $(document.body).mousemove(function(event) {
-            var children;
+            var _j, _len1, _results;
             if (selecting) {
               corners(selector, origin_event, event);
               children = _this.children();
-              return children.each(function() {
-                var true_block;
-                true_block = $(this).children();
-                if (true_block.hasClass('ice_statement')) {
-                  if (overlap(selector, true_block)) {
-                    return true_block.css('outline', '2px solid #FF0');
-                  } else {
-                    return true_block.css('outline', '');
-                  }
+              _results = [];
+              for (_j = 0, _len1 = childData.length; _j < _len1; _j++) {
+                child = childData[_j];
+                if (rawOverlap(child.pos, genPosData(selector))) {
+                  _results.push(child.element.css('outline', '2px solid #FF0'));
+                } else {
+                  _results.push(child.element.css('outline', ''));
                 }
-              });
+              }
+              return _results;
             }
           });
           return false;
@@ -816,7 +823,7 @@ THE SOFTWARE.
       });
       input = $("<input>");
       input.addClass("ice_input");
-      input.keyup(function() {
+      input.on('keyup keydown', function() {
         return segment.children[0] = this.value;
       });
       input.keydown(function(event) {
@@ -906,25 +913,23 @@ THE SOFTWARE.
 
   genPosData = function(el) {
     var pos;
-    pos = el.data('overlapPos');
-    if ((el.data('overlapRerender') == null) && (el.data('overlapPos') != null)) {
-      return pos;
-    } else {
-      pos = {};
-      pos.head = el.offset();
-      pos.tail = {
-        left: pos.head.left + el.width(),
-        top: pos.head.top + el.height()
-      };
-      el.data('overlapPos', pos);
-      return pos;
-    }
+    pos = {};
+    pos.head = el.offset();
+    pos.tail = {
+      left: pos.head.left + el.width(),
+      top: pos.head.top + el.height()
+    };
+    return pos;
   };
 
   overlap = function(a, b) {
     var a_pos, b_pos;
     a_pos = genPosData(a);
     b_pos = genPosData(b);
+    return a_pos.head.left < b_pos.tail.left && b_pos.head.left < a_pos.tail.left && a_pos.head.top < b_pos.tail.top && b_pos.head.top < a_pos.tail.top;
+  };
+
+  rawOverlap = function(a_pos, b_pos) {
     return a_pos.head.left < b_pos.tail.left && b_pos.head.left < a_pos.tail.left && a_pos.head.top < b_pos.tail.top && b_pos.head.top < a_pos.tail.top;
   };
 
@@ -1098,26 +1103,29 @@ THE SOFTWARE.
         }), 0);
       };
       attempt_reblock = function() {
-        return $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(function() {
-          var error, tree;
-          tree = $(this).data('ice_tree');
-          try {
-            block = (blockifier(tree.stringify())).children[0];
-            block.parent = tree.parent;
-            tree.parent.children.splice(tree.parent.children.indexOf(tree), 1, block);
-            return $(this).replaceWith(block.blockify());
-          } catch (_error) {
-            error = _error;
-            return console.log(error);
-          }
-        });
+        return setTimeout((function() {
+          return $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(function() {
+            var error, tree;
+            tree = $(this).data('ice_tree');
+            try {
+              block = (blockifier(tree.stringify())).children[0];
+              block.parent = tree.parent;
+              tree.parent.children.splice(tree.parent.children.indexOf(tree), 1, block);
+              return $(this).replaceWith(block.blockify());
+            } catch (_error) {
+              error = _error;
+              return console.log(error);
+            }
+          });
+        }), 0);
       };
-      $(document.body).mouseup(checkHeight).mouseup(attempt_reblock).keydown(checkHeight).keydown(function(event) {
+      $(document.body).on('mouseup keydown', checkHeight).mouseup(attempt_reblock).on('keydown keyup', (function(event) {
         var _ref1;
         if ((_ref1 = event.keyCode) === 13 || _ref1 === 9) {
           return attempt_reblock();
         }
-      });
+      }));
+      $(window).resize(checkHeight);
       this.element.append(this.palette).append(this.workspace).append(this.selector);
       this.blockifier = blockifier;
     }

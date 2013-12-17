@@ -41,7 +41,8 @@
       };
       reserved = {
         'return': coffee.RETURN_VOID,
-        'break': coffee.BREAK
+        'break': coffee.BREAK,
+        'lastmousemove': coffee.LASTMOUSEMOVE
       };
       special_functions = {
         'write': argIf(coffee.WRITE, 'write'),
@@ -51,6 +52,13 @@
         'sin': argIf(coffee.SIN, 'sin'),
         'cos': argIf(coffee.COS, 'cos'),
         'speed': argIf(coffee.SPEED, 'speed'),
+        'tick': function(args) {
+          if (args.length === 2) {
+            return sub(coffee.TICK, args[0], args[1]);
+          } else {
+            return sub(coffee.CALL, 'tick', args[0]);
+          }
+        },
         'moveto': function(args) {
           switch (args.length) {
             case 2:

@@ -305,3 +305,15 @@ Turtle
         'E'
         'F'
         'G'
+
+  TICK. Have something happen over and over, quickly (command)
+    tick {{times}}, {{function}}
+      times: The number of times per second to execute the function
+      function: The function to execute
+  
+  TICKARROW. Have something happen over and over, quickly (command)
+    tick {{times}}, -> {{block}}
+      times: The number of times per second to execute the function
+
+  LASTMOUSEMOVE. The last place the mouse was (value)
+    lastmousemove
