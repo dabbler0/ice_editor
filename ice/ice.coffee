@@ -1090,7 +1090,7 @@ class IceEditor
       
       @workspace.animate {
         'background-color': '#DDD'
-        'left': 200
+        'left': 250
         'padding-left': 0
       }, 1200
 

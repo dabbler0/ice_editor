@@ -1307,7 +1307,7 @@ THE SOFTWARE.
         });
         _this.workspace.animate({
           'background-color': '#DDD',
-          'left': 200,
+          'left': 250,
           'padding-left': 0
         }, 1200);
         _this.root_element.find('.ice_inline').each(function() {
