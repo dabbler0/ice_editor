@@ -4,7 +4,8 @@ Operator Order
   ADD SUB
   LESSER GREATER
   IS ISNT
-  AND OR
+  AND
+  OR
 
 Math
   PARENS. Parentheses (value)
