@@ -62,11 +62,11 @@
   left: 0;
 }
 .ice_palette {
-  width: 200px;
+  width: 250px;
   white-space: nowrap;
 }
 .ice_workspace {
-  left: 200px;
+  left: 250px;
   background-color: #DDD;
 }
 

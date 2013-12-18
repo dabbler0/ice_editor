@@ -303,7 +303,7 @@ class IceInlineSegment extends IceSegment
     # Make us droppable
     block.droppable
       greedy: true
-      tolerance: 'pointer'
+      tolerance: 'corner'
       hoverClass: 'highlight'
       accept: (drop) -> segment.droppable and segment.accept drop.data 'ice_tree'
       drop: (event, ui) ->
@@ -516,7 +516,7 @@ class IceBlockSegment extends IceSegment
     # Make it droppable
     drop_target.droppable
       greedy: true
-      tolerance: 'pointer'
+      tolerance: 'corner'
       hoverClass: 'highlight'
       accept: -> segment.droppable
       drop: (event, ui) ->
@@ -609,7 +609,7 @@ class IceStatement extends IceSegment
     # Make it droppable
     drop_target.droppable
       greedy: true
-      tolerance: 'pointer'
+      tolerance: 'corner'
       hoverClass: 'highlight'
       accept: -> segment.droppable
       drop: (event, ui) ->
@@ -673,7 +673,7 @@ class IceHandwrittenSegment extends IceStatement
     # Make it droppable
     drop_target.droppable
       greedy: true
-      tolerance: 'pointer'
+      tolerance: 'corner'
       hoverClass: 'highlight'
       accept: -> segment.droppable
       drop: (event, ui) ->
@@ -875,7 +875,7 @@ class IceEditor
       @palette.append details
     @palette.droppable
       greedy: true
-      tolerance: 'pointer'
+      tolerance: 'corner'
       hoverClass: 'highlight'
       accept: (drop) -> true
       drop: (event, ui) ->
@@ -951,7 +951,7 @@ class IceEditor
     
     bottom_div.droppable
       greedy: true
-      tolerance: 'pointer'
+      tolerance: 'corner'
       hoverClass: 'highlight'
       accept: (drop) -> true
       drop: (event, ui) ->
@@ -1011,7 +1011,7 @@ class IceEditor
     
     bottom_div.droppable
       greedy: true
-      tolerance: 'pointer'
+      tolerance: 'corner'
       hoverClass: 'highlight'
       accept: (drop) -> true
       drop: (event, ui) ->

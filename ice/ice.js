@@ -376,7 +376,7 @@ THE SOFTWARE.
       });
       block.droppable({
         greedy: true,
-        tolerance: 'pointer',
+        tolerance: 'corner',
         hoverClass: 'highlight',
         accept: function(drop) {
           return segment.droppable && segment.accept(drop.data('ice_tree'));
@@ -652,7 +652,7 @@ THE SOFTWARE.
       drop_target.addClass('ice_block_drop_target');
       drop_target.droppable({
         greedy: true,
-        tolerance: 'pointer',
+        tolerance: 'corner',
         hoverClass: 'highlight',
         accept: function() {
           return segment.droppable;
@@ -759,7 +759,7 @@ THE SOFTWARE.
       drop_target.addClass('ice_drop_target');
       drop_target.droppable({
         greedy: true,
-        tolerance: 'pointer',
+        tolerance: 'corner',
         hoverClass: 'highlight',
         accept: function() {
           return segment.droppable;
@@ -835,7 +835,7 @@ THE SOFTWARE.
       drop_target.addClass('ice_drop_target');
       drop_target.droppable({
         greedy: true,
-        tolerance: 'pointer',
+        tolerance: 'corner',
         hoverClass: 'highlight',
         accept: function() {
           return segment.droppable;
@@ -1042,7 +1042,7 @@ THE SOFTWARE.
       }
       this.palette.droppable({
         greedy: true,
-        tolerance: 'pointer',
+        tolerance: 'corner',
         hoverClass: 'highlight',
         accept: function(drop) {
           return true;
@@ -1149,7 +1149,7 @@ THE SOFTWARE.
       _this = this;
       bottom_div.droppable({
         greedy: true,
-        tolerance: 'pointer',
+        tolerance: 'corner',
         hoverClass: 'highlight',
         accept: function(drop) {
           return true;
@@ -1218,7 +1218,7 @@ THE SOFTWARE.
       _this = this;
       bottom_div.droppable({
         greedy: true,
-        tolerance: 'pointer',
+        tolerance: 'corner',
         hoverClass: 'highlight',
         accept: function(drop) {
           return true;
