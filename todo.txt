@@ -1,5 +1,3 @@
 The Big Todo List
-  1. Auto-insert parentheses where needed
-
-The Little Todo List
-  1. Make it possible to delete inputs from a multi-input
+  1. When autoblocking, reinsert cursor where it was before
+  2. Full AST understanding.

@@ -5,7 +5,6 @@ sub = ICE.sub
 op = (order, template) ->
   ICE.op order, template,
   (->
-    console.log 'Called my method'
     first = new ICE.IceStaticSegment('(')
     last = new ICE.IceStaticSegment(')')
     this.children.unshift first
@@ -31,7 +30,6 @@ $.ajax
     coffee = ICE.frosting frosting
     window.coffee = coffee.categories
     coffee = coffee.all
-    console.log coffee
 
     argIf = (template, name) ->
       return (args) ->
@@ -203,7 +201,6 @@ $.ajax
         
         # Once this is finished this default case should never occur.
         else
-          console.log 'dunno', node
           new ICE.IceStaticSegment('unknown construct')
     window.coffee_blockify = (string) ->
       blockify CoffeeScript.nodes(string)

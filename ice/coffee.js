@@ -7,7 +7,6 @@
   op = function(order, template) {
     return ICE.op(order, template, (function() {
       var first, last;
-      console.log('Called my method');
       first = new ICE.IceStaticSegment('(');
       last = new ICE.IceStaticSegment(')');
       this.children.unshift(first);
@@ -31,7 +30,6 @@
       coffee = ICE.frosting(frosting);
       window.coffee = coffee.categories;
       coffee = coffee.all;
-      console.log(coffee);
       argIf = function(template, name) {
         return function(args) {
           if (args.length === 1) {
@@ -290,7 +288,6 @@
           case 'Existence':
             return sub(coffee.EXISTENCE, blockify(node.expression));
           default:
-            console.log('dunno', node);
             return new ICE.IceStaticSegment('unknown construct');
         }
       };
