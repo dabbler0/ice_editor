@@ -112,15 +112,11 @@ THE SOFTWARE.
         target.droppable = mobile.droppable = false;
         mobile.parent = target;
         if (!mobile.parenWrapped && (target.precedence != null) && target.precedence < mobile.precedence) {
-          console.log('Calling, because mobile.parenWrapped has', mobile.parenWrapped);
           mobile.opBinding.call(mobile);
           return mobile.parenWrapped = true;
         } else if (mobile.parenWrapped && !((target.precedence != null) && target.precedence < mobile.precedence)) {
-          console.log('opUnbinding');
           mobile.opUnbinding.call(mobile);
           return mobile.parenWrapped = false;
-        } else {
-          return console.log('electing to stall', mobile.parenWrapped, target.precedence, mobile.precedence);
         }
       }
     }
@@ -1431,7 +1427,6 @@ THE SOFTWARE.
       }
       final.opBinding = function() {
         var first, last;
-        console.log('Method called');
         first = new IceStaticSegment('(');
         last = new IceStaticSegment(')');
         this.children.unshift(first);
@@ -1442,7 +1437,6 @@ THE SOFTWARE.
         return this.children.pop();
       };
       final.blockBinding = function(block) {
-        console.log('Method called on', block);
         if (block.children().first().data('ice_tree') !== this.children[0]) {
           if (this.parenWrapped) {
             return block.prepend(this.children[0].blockify()).append(this.children[this.children.length - 1].blockify());
