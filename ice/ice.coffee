@@ -113,9 +113,11 @@ class IceSegment
   
   templateify: ->
     block = @blockify()
+    droppables = block.find('.ui-droppable').droppable 'disable'
     segment = this
     new_block = null
     block.on 'dragstart', ->
+      droppables.droppable 'enable'
       clone = segment.clone()
       new_block = clone.templateify()
       new_block.hide()
@@ -466,16 +468,18 @@ class IceBlockSegment extends IceSegment
         children = $(this).children().filter('.ice_block_command_wrapper')
         childData = []
         children.each(->
-          childData.push
-            pos: genPosData $(this).children()
-            element: $(this).children()
+          children = $(this).children()
+          if children.size() > 0
+            childData.push
+              pos: genPosData children
+              element: children
         )
         $(document.body).mousemove (event) ->
           if selecting
             corners selector, origin_event, event
             children = _this.children()
             for child in childData
-              if rawOverlap child.pos, genPosData selector
+              if rawOverlap child.pos, genCornersPos origin_event, event
                   child.element.css('outline', '2px solid #FF0')
                 else
                   child.element.css('outline', '')
@@ -761,6 +765,20 @@ corners = (element, a, b) ->
     top: y[0]
     width: x[1] - x[0]
     height: y[1] - y[0]
+
+genCornersPos = (a, b) ->
+  x = [a.pageX, b.pageX]
+  y = [a.pageY, b.pageY]
+  x.sort((a, b) -> a - b)
+  y.sort((a, b) -> a - b)
+  return {
+    head:
+      left: x[0]
+      top: y[0]
+    tail:
+      left: x[1]
+      top: y[1]
+  }
 
 genPosData  = (el) ->
   pos = {}

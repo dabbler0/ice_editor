@@ -213,6 +213,8 @@
                 return sub(coffee.REPEAT, blockify(node.source.to), blockify(node.body));
             }
             break;
+          case 'While':
+            return sub(coffee.WHILE, blockify(node.condition), blockify(node.body));
           case 'Range':
             if (node.exclusive) {
               return sub(coffee.EXCLUSIVE_RANGE, blockify(node.from), blockify(node.to));

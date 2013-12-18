@@ -23,7 +23,7 @@ THE SOFTWARE.
 
 
 (function() {
-  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, combobox, corners, defrost, destructure, genPosData, moveSegment, overlap, quoted_regex, rawOverlap, to_frosting,
+  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, combobox, corners, defrost, destructure, genCornersPos, genPosData, moveSegment, overlap, quoted_regex, rawOverlap, to_frosting,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
@@ -157,12 +157,14 @@ THE SOFTWARE.
     };
 
     IceSegment.prototype.templateify = function() {
-      var block, new_block, segment;
+      var block, droppables, new_block, segment;
       block = this.blockify();
+      droppables = block.find('.ui-droppable').droppable('disable');
       segment = this;
       new_block = null;
       block.on('dragstart', function() {
         var clone;
+        droppables.droppable('enable');
         clone = segment.clone();
         new_block = clone.templateify();
         new_block.hide();
@@ -599,10 +601,13 @@ THE SOFTWARE.
           children = $(this).children().filter('.ice_block_command_wrapper');
           childData = [];
           children.each(function() {
-            return childData.push({
-              pos: genPosData($(this).children()),
-              element: $(this).children()
-            });
+            children = $(this).children();
+            if (children.size() > 0) {
+              return childData.push({
+                pos: genPosData(children),
+                element: children
+              });
+            }
           });
           $(document.body).mousemove(function(event) {
             var _j, _len1, _results;
@@ -612,7 +617,7 @@ THE SOFTWARE.
               _results = [];
               for (_j = 0, _len1 = childData.length; _j < _len1; _j++) {
                 child = childData[_j];
-                if (rawOverlap(child.pos, genPosData(selector))) {
+                if (rawOverlap(child.pos, genCornersPos(origin_event, event))) {
                   _results.push(child.element.css('outline', '2px solid #FF0'));
                 } else {
                   _results.push(child.element.css('outline', ''));
@@ -909,6 +914,28 @@ THE SOFTWARE.
       width: x[1] - x[0],
       height: y[1] - y[0]
     });
+  };
+
+  genCornersPos = function(a, b) {
+    var x, y;
+    x = [a.pageX, b.pageX];
+    y = [a.pageY, b.pageY];
+    x.sort(function(a, b) {
+      return a - b;
+    });
+    y.sort(function(a, b) {
+      return a - b;
+    });
+    return {
+      head: {
+        left: x[0],
+        top: y[0]
+      },
+      tail: {
+        left: x[1],
+        top: y[1]
+      }
+    };
   };
 
   genPosData = function(el) {

@@ -139,6 +139,8 @@ $.ajax
             when node.index then sub coffee.FOR_IN_INDEX, blockify(node.name), blockify(node.index), blockify(node.source), blockify(node.body)
             when node.name then sub coffee.FOR_IN, blockify(node.name), blockify(node.source), blockify(node.body)
             else sub coffee.REPEAT, blockify(node.source.to), blockify(node.body) # This actually loses a lot! Careful now!
+        
+        when 'While' then sub coffee.WHILE, blockify(node.condition), blockify(node.body)
 
         when 'Range'
           # [x...y] ranges are inclusive or exclusive

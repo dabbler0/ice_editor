@@ -102,6 +102,10 @@ Control Structures
       variable: The loop variable
       index: A variable for the index
       array: The array to loop over
+  
+  WHILE. Do something while a condition is true (control, command)
+    while {{condition}} {{block}}
+      condition: The condition to test
 
   REPEAT. Repeat something a number of times (control, command)
     for [1..{{number}}] {{block}}
