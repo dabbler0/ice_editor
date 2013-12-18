@@ -68,16 +68,31 @@ moveSegment = (mobile, target) ->
       target.children.unshift mobile
       target.droppable = mobile.droppable = true
       mobile.parent = target
+
+      # UnParenWrap if necessary 
+      if mobile.parenWrapped then mobile.opUnbinding.call(mobile)
+      mobile.parenWrapped = false
     else if target.type == 'statement' and target.parent?
       target.parent.children.splice(target.parent.children.indexOf(target)+1, 0, mobile)
       target.droppable = mobile.droppable = true
       mobile.parent = target.parent
+
+      # UnParenWrap if necessary
+      if mobile.parenWrapped then mobile.opUnbinding.call(mobile)
+      mobile.parenWrapped = false
+
     else if target.type == 'inline'
       target.children = [mobile]
       target.droppable = mobile.droppable = false
       mobile.parent = target
-
-    console.log target.type, 'therefore', mobile.droppable
+      
+      # Deal with precedence for real
+      if not mobile.parenWrapped and target.precedence? and target.precedence < mobile.precedence
+        mobile.opBinding.call(mobile)
+        mobile.parenWrapped = true
+      else if mobile.parenWrapped and not (target.precedence? and target.precedence < mobile.precedence)
+        mobile.opUnbinding.call(mobile)
+        mobile.parenWrapped = false
 
 class IceSegment
   constructor: ->
@@ -145,11 +160,12 @@ class IceStaticSegment extends IceSegment
         block.append child
       else
         block.append child.blockify()
+    block.data('ice_tree', this)
     return block
 
 
 class IceInlineSegment extends IceSegment
-  constructor: (accept, tooltip, options) ->
+  constructor: (accept, tooltip, options, precedence) ->
     # Accept function
     accept ?= (drop) -> drop? and drop.syntax_type? and 'value' in drop.syntax_type
     
@@ -158,6 +174,9 @@ class IceInlineSegment extends IceSegment
 
     # Dropdown options
     options ?= []
+
+    # Operator precedence (by default claim that we never have to wrap parens)
+    precedence ?= Infinity
     
     # Set up all the tree things
     @parent = null
@@ -172,7 +191,10 @@ class IceInlineSegment extends IceSegment
     @tooltip = tooltip
     @options = options
 
-  _reconstruct: -> new IceInlineSegment(@accept, @tooltip, @options)
+    # Operator precedence
+    @precedence = precedence
+
+  _reconstruct: -> new IceInlineSegment(@accept, @tooltip, @options, @precedence)
 
   stringify: ->
     if @line_wrapped
@@ -520,7 +542,15 @@ class IceBlockSegment extends IceSegment
     return block
 
 class IceStatement extends IceSegment
-  constructor: (template, tooltip, type) ->
+  # TODO this is getting ridiculous. Move to an "options" object or something.
+  constructor: (template, tooltip, type, precedence, opBinding, opUnbinding, blockBinding, parenWrapped) ->
+    # Defaults for if no precedence is specified
+    precedence ?= 0
+    opBinding ?= ->
+    opUnbinding ?= ->
+    blockBinding ?= ->
+    parenWrapped ?= false
+
     # Tree identification things
     @parent = null
 
@@ -536,8 +566,14 @@ class IceStatement extends IceSegment
     
     @syntax_type = type
     @tooltip = tooltip
+    
+    @parenWrapped = false
+    @precedence = precedence
+    @opBinding = opBinding
+    @blockBinding = blockBinding
 
-  _reconstruct: -> new IceStatement([], @tooltip, @syntax_type)
+  _reconstruct: ->
+    new IceStatement([], @tooltip, @syntax_type, @precedence, @opBinding, @opUnbinding, @blockBinding, @parenWrapped)
 
   blockify: ->
     segment = this
@@ -605,8 +641,10 @@ class IceStatement extends IceSegment
       revert: 'invalid'
       start: (event, ui) ->
         ui.helper.addClass 'ui-helper'
-      end: (event, ui) ->
+      stop: (event, ui) ->
         ui.helper.removeClass 'ui-helper'
+        setTimeout (->
+          segment.blockBinding.call(segment, block)), 0
 
     return block
 
@@ -1100,6 +1138,7 @@ defrost = (frosting, sub...) ->
   tooltip = frosting.tooltip
   types = frosting.types
   dict = frosting.dict
+  precedence = frosting.precedence
   frosting = frosting.frosting
 
   IceStatement final = new IceStatement([], tooltip, types)
@@ -1148,6 +1187,30 @@ defrost = (frosting, sub...) ->
         inlines[found[1]].droppable = typeof subbed is 'string'
         subbed.droppable = false
         subbed.parent = inlines[found[1]] # This is hacky.
+
+  # Assign precedence if given
+  if precedence?
+    final.precedence = precedence
+    for child in final.children
+      child.precedence = precedence
+    
+    #TODO make this extensible somehow, preferably through the frosting file.
+    final.opBinding = ->
+      first = new IceStaticSegment('(')
+      last = new IceStaticSegment(')')
+      this.children.unshift first
+      this.children.push last
+    final.opUnbinding = ->
+      this.children.shift()
+      this.children.pop()
+    final.blockBinding = (block) ->
+      if block.children().first().data('ice_tree') != this.children[0] # This is hacky.
+        if this.parenWrapped
+          block.prepend(this.children[0].blockify()).append(this.children[this.children.length - 1].blockify())
+        else
+          # This is hacky.
+          block.children().first().remove()
+          block.children().last().remove()
   
   final.children.push new IceStaticSegment(frosting[index...frosting.length])
   
@@ -1192,36 +1255,46 @@ destructure = (string) ->
 to_frosting = (structure) ->
   categories = []
   all = {}
+  operator_order = {}
   for category in structure.children
-    # Make a new category
-    new_category =
-      name: category.head
-      blocks: {}
+    if category.head is 'Operator Order' #Special.. hack.
+      for child, i in category.children
+        level = child.head.split ' '
+        for operator in level
+          operator_order[operator] = i
+    else
+      # Make a new category
+      new_category =
+        name: category.head
+        blocks: {}
 
-    categories.push new_category
+      categories.push new_category
 
-    for block in category.children
-      # Make this new block
-      new_block =
-        tooltip: block.head[block.head.indexOf('.')+1...block.head.lastIndexOf('(')].trim()
-        frosting: block.children[0].head
-        types: (type.trim() for type in block.head[block.head.lastIndexOf('(')..][1...-1].split(','))
-        dict: {}
-      
-      nickname = block.head[...block.head.indexOf('.')]
+      for block in category.children
+        # Make this new block
+        new_block =
+          tooltip: block.head[block.head.indexOf('.')+1...block.head.lastIndexOf('(')].trim()
+          frosting: block.children[0].head
+          types: (type.trim() for type in block.head[block.head.lastIndexOf('(')..][1...-1].split(','))
+          dict: {}
 
-      new_category.blocks[nickname] = new_block
-      all[nickname] = new_block
+        nickname = block.head[...block.head.indexOf('.')]
+        
+        if nickname of operator_order
+          new_block.precedence = operator_order[nickname]
 
-      # Run through its dictionary definition
-      for line in block.children[0].children
-        [key, value] = line.head.split(':')
-        new_block.dict[key] =
-          tooltip: value
+        new_category.blocks[nickname] = new_block
+        all[nickname] = new_block
 
-        # Add the dropdown options
-        if line.children.length > 0
-          new_block.dict[key].options = (child.head for child in line.children)
+        # Run through its dictionary definition
+        for line in block.children[0].children
+          [key, value] = line.head.split(':')
+          new_block.dict[key] =
+            tooltip: value
+
+          # Add the dropdown options
+          if line.children.length > 0
+            new_block.dict[key].options = (child.head for child in line.children)
 
     
   return {
@@ -1229,10 +1302,20 @@ to_frosting = (structure) ->
     all: all
   }
 
+bind_op = (order, template, opbind, blockbind) ->
+  template.opBinding = opbind
+  template.blockBinding = blockbind
+  template.precedence = order
+  for child in template.children
+    if child.type is 'inline'
+      child.precedence = order
+  return template
+
 window.ICE =
   IceEditor: IceEditor
   IceBlockSegment: IceBlockSegment
   IceStaticSegment: IceStaticSegment
   sub: defrost
+  op: bind_op
   frosting: (str) ->
     to_frosting destructure str

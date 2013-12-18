@@ -1,3 +1,11 @@
+Operator Order
+  NOT
+  MUL DIV
+  ADD SUB
+  LESSER GREATER
+  IS ISNT
+  AND OR
+
 Math
   PARENS. Parentheses (value)
     ({{value}})

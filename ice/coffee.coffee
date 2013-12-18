@@ -1,6 +1,21 @@
 # Convenience reassignment
 sub = ICE.sub
 
+# For binding operator order precedence
+op = (order, template) ->
+  ICE.op order, template,
+  (->
+    console.log 'Called my method'
+    first = new ICE.IceStaticSegment('(')
+    last = new ICE.IceStaticSegment(')')
+    this.children.unshift first
+    this.children.shift last
+    this.parenWrapped = true),
+  (block) ->
+    if block.children.first().data('ice_tree') != this.children[0] #Hacky...
+      block.prepend(this.children[0]).append(this.children[this.children.length - 1])
+
+
 fitsAwait = (node) ->
   return node.variable.base.value is 'await' and
         node.args.length is 1 and
@@ -19,7 +34,6 @@ $.ajax
     console.log coffee
 
     argIf = (template, name) ->
-      console.log 'Template with', template
       return (args) ->
         if args.length is 1 then sub template, args[0]
         else sub coffee.CALL, name, args
@@ -36,6 +50,23 @@ $.ajax
       '!': coffee.NOT
       '>': coffee.GREATER
       '<': coffee.LESSER
+
+
+    # Generate operator precedences
+    operator_preorder = [
+      ['!'],
+      ['*', '/'],
+      ['+', '-'],
+      ['>', '<'],
+      ['===', '!==='],
+      ['&&', '||']
+    ]
+
+    operator_order = {}
+
+    for operator_block, i in operator_preorder
+      for operator in operator_block
+        operator_order[operator] = i
 
     reserved =
       'return': coffee.RETURN_VOID
@@ -150,9 +181,9 @@ $.ajax
         when 'Parens' then sub coffee.PARENS, blockify(node.body.unwrap())
         
         when 'Op'
-          if not node.second? and node.operator == '-' then sub coffee.NEGATIVE, blockify(node.first) # Hack to deal with this case, since it is two operators at once
-          else if node.second? then sub operators[node.operator], blockify(node.first), blockify(node.second)
-          else sub operators[node.operator], blockify(node.first)
+          if not node.second? and node.operator == '-' then op 0, sub coffee.NEGATIVE, blockify(node.first) # Hack to deal with this case, since it is two operators at once
+          else if node.second? then op operator_order[node.operator], sub operators[node.operator], blockify(node.first), blockify(node.second)
+          else op operator_order[node.operator], sub operators[node.operator], blockify(node.first)
 
         when 'If'
           if node.elseBody? then sub coffee.IF_ELSE, blockify(node.condition), blockify(node.body), blockify(node.elseBody)

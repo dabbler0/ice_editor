@@ -23,7 +23,7 @@ THE SOFTWARE.
 
 
 (function() {
-  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, combobox, corners, defrost, destructure, genCornersPos, genPosData, moveSegment, overlap, quoted_regex, rawOverlap, to_frosting,
+  var IceBlockSegment, IceEditor, IceHandwrittenSegment, IceInlineSegment, IceMultiSegment, IceSegment, IceStatement, IceStaticSegment, bind_op, combobox, corners, defrost, destructure, genCornersPos, genPosData, moveSegment, overlap, quoted_regex, rawOverlap, to_frosting,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
@@ -95,16 +95,34 @@ THE SOFTWARE.
         target.children.unshift(mobile);
         target.droppable = mobile.droppable = true;
         mobile.parent = target;
+        if (mobile.parenWrapped) {
+          mobile.opUnbinding.call(mobile);
+        }
+        return mobile.parenWrapped = false;
       } else if (target.type === 'statement' && (target.parent != null)) {
         target.parent.children.splice(target.parent.children.indexOf(target) + 1, 0, mobile);
         target.droppable = mobile.droppable = true;
         mobile.parent = target.parent;
+        if (mobile.parenWrapped) {
+          mobile.opUnbinding.call(mobile);
+        }
+        return mobile.parenWrapped = false;
       } else if (target.type === 'inline') {
         target.children = [mobile];
         target.droppable = mobile.droppable = false;
         mobile.parent = target;
+        if (!mobile.parenWrapped && (target.precedence != null) && target.precedence < mobile.precedence) {
+          console.log('Calling, because mobile.parenWrapped has', mobile.parenWrapped);
+          mobile.opBinding.call(mobile);
+          return mobile.parenWrapped = true;
+        } else if (mobile.parenWrapped && !((target.precedence != null) && target.precedence < mobile.precedence)) {
+          console.log('opUnbinding');
+          mobile.opUnbinding.call(mobile);
+          return mobile.parenWrapped = false;
+        } else {
+          return console.log('electing to stall', mobile.parenWrapped, target.precedence, mobile.precedence);
+        }
       }
-      return console.log(target.type, 'therefore', mobile.droppable);
     }
   };
 
@@ -210,6 +228,7 @@ THE SOFTWARE.
           block.append(child.blockify());
         }
       }
+      block.data('ice_tree', this);
       return block;
     };
 
@@ -220,7 +239,7 @@ THE SOFTWARE.
   IceInlineSegment = (function(_super) {
     __extends(IceInlineSegment, _super);
 
-    function IceInlineSegment(accept, tooltip, options) {
+    function IceInlineSegment(accept, tooltip, options, precedence) {
       if (accept == null) {
         accept = function(drop) {
           return (drop != null) && (drop.syntax_type != null) && __indexOf.call(drop.syntax_type, 'value') >= 0;
@@ -232,6 +251,9 @@ THE SOFTWARE.
       if (options == null) {
         options = [];
       }
+      if (precedence == null) {
+        precedence = Infinity;
+      }
       this.parent = null;
       this.children = options[0] != null ? [options[0]] : [];
       this.type = 'inline';
@@ -240,10 +262,11 @@ THE SOFTWARE.
       this.accept = accept;
       this.tooltip = tooltip;
       this.options = options;
+      this.precedence = precedence;
     }
 
     IceInlineSegment.prototype._reconstruct = function() {
-      return new IceInlineSegment(this.accept, this.tooltip, this.options);
+      return new IceInlineSegment(this.accept, this.tooltip, this.options, this.precedence);
     };
 
     IceInlineSegment.prototype.stringify = function() {
@@ -672,8 +695,23 @@ THE SOFTWARE.
   IceStatement = (function(_super) {
     __extends(IceStatement, _super);
 
-    function IceStatement(template, tooltip, type) {
+    function IceStatement(template, tooltip, type, precedence, opBinding, opUnbinding, blockBinding, parenWrapped) {
       var child, _i, _len;
+      if (precedence == null) {
+        precedence = 0;
+      }
+      if (opBinding == null) {
+        opBinding = function() {};
+      }
+      if (opUnbinding == null) {
+        opUnbinding = function() {};
+      }
+      if (blockBinding == null) {
+        blockBinding = function() {};
+      }
+      if (parenWrapped == null) {
+        parenWrapped = false;
+      }
       this.parent = null;
       this.children = [];
       for (_i = 0, _len = template.length; _i < _len; _i++) {
@@ -685,10 +723,14 @@ THE SOFTWARE.
       this.droppable = true;
       this.syntax_type = type;
       this.tooltip = tooltip;
+      this.parenWrapped = false;
+      this.precedence = precedence;
+      this.opBinding = opBinding;
+      this.blockBinding = blockBinding;
     }
 
     IceStatement.prototype._reconstruct = function() {
-      return new IceStatement([], this.tooltip, this.syntax_type);
+      return new IceStatement([], this.tooltip, this.syntax_type, this.precedence, this.opBinding, this.opUnbinding, this.blockBinding, this.parenWrapped);
     };
 
     IceStatement.prototype.blockify = function() {
@@ -760,8 +802,11 @@ THE SOFTWARE.
         start: function(event, ui) {
           return ui.helper.addClass('ui-helper');
         },
-        end: function(event, ui) {
-          return ui.helper.removeClass('ui-helper');
+        stop: function(event, ui) {
+          ui.helper.removeClass('ui-helper');
+          return setTimeout((function() {
+            return segment.blockBinding.call(segment, block);
+          }), 0);
         }
       });
       return block;
@@ -1321,11 +1366,12 @@ THE SOFTWARE.
   quoted_regex = /{{((?:\w|\d)*)((?:...)?)}}/g;
 
   defrost = function() {
-    var child, dict, final, found, frosting, index, inlines, key, new_block, new_child, sub, subbed, tooltip, types, value, _i, _len;
+    var child, dict, final, found, frosting, index, inlines, key, new_block, new_child, precedence, sub, subbed, tooltip, types, value, _i, _j, _len, _len1, _ref;
     frosting = arguments[0], sub = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
     tooltip = frosting.tooltip;
     types = frosting.types;
     dict = frosting.dict;
+    precedence = frosting.precedence;
     frosting = frosting.frosting;
     IceStatement(final = new IceStatement([], tooltip, types));
     inlines = {};
@@ -1375,6 +1421,37 @@ THE SOFTWARE.
           subbed.parent = inlines[found[1]];
         }
       }
+    }
+    if (precedence != null) {
+      final.precedence = precedence;
+      _ref = final.children;
+      for (_j = 0, _len1 = _ref.length; _j < _len1; _j++) {
+        child = _ref[_j];
+        child.precedence = precedence;
+      }
+      final.opBinding = function() {
+        var first, last;
+        console.log('Method called');
+        first = new IceStaticSegment('(');
+        last = new IceStaticSegment(')');
+        this.children.unshift(first);
+        return this.children.push(last);
+      };
+      final.opUnbinding = function() {
+        this.children.shift();
+        return this.children.pop();
+      };
+      final.blockBinding = function(block) {
+        console.log('Method called on', block);
+        if (block.children().first().data('ice_tree') !== this.children[0]) {
+          if (this.parenWrapped) {
+            return block.prepend(this.children[0].blockify()).append(this.children[this.children.length - 1].blockify());
+          } else {
+            block.children().first().remove();
+            return block.children().last().remove();
+          }
+        }
+      };
     }
     final.children.push(new IceStaticSegment(frosting.slice(index, frosting.length)));
     for (key in dict) {
@@ -1427,56 +1504,72 @@ THE SOFTWARE.
   };
 
   to_frosting = function(structure) {
-    var all, block, categories, category, child, key, line, new_block, new_category, nickname, type, value, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2, _ref3;
+    var all, block, categories, category, child, i, key, level, line, new_block, new_category, nickname, operator, operator_order, type, value, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1, _ref2, _ref3, _ref4;
     categories = [];
     all = {};
+    operator_order = {};
     _ref = structure.children;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       category = _ref[_i];
-      new_category = {
-        name: category.head,
-        blocks: {}
-      };
-      categories.push(new_category);
-      _ref1 = category.children;
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        block = _ref1[_j];
-        new_block = {
-          tooltip: block.head.slice(block.head.indexOf('.') + 1, block.head.lastIndexOf('(')).trim(),
-          frosting: block.children[0].head,
-          types: (function() {
-            var _k, _len2, _ref2, _results;
-            _ref2 = block.head.slice(block.head.lastIndexOf('(')).slice(1, -1).split(',');
-            _results = [];
-            for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-              type = _ref2[_k];
-              _results.push(type.trim());
-            }
-            return _results;
-          })(),
-          dict: {}
+      if (category.head === 'Operator Order') {
+        _ref1 = category.children;
+        for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
+          child = _ref1[i];
+          level = child.head.split(' ');
+          for (_k = 0, _len2 = level.length; _k < _len2; _k++) {
+            operator = level[_k];
+            operator_order[operator] = i;
+          }
+        }
+      } else {
+        new_category = {
+          name: category.head,
+          blocks: {}
         };
-        nickname = block.head.slice(0, block.head.indexOf('.'));
-        new_category.blocks[nickname] = new_block;
-        all[nickname] = new_block;
-        _ref2 = block.children[0].children;
-        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-          line = _ref2[_k];
-          _ref3 = line.head.split(':'), key = _ref3[0], value = _ref3[1];
-          new_block.dict[key] = {
-            tooltip: value
-          };
-          if (line.children.length > 0) {
-            new_block.dict[key].options = (function() {
-              var _l, _len3, _ref4, _results;
-              _ref4 = line.children;
+        categories.push(new_category);
+        _ref2 = category.children;
+        for (_l = 0, _len3 = _ref2.length; _l < _len3; _l++) {
+          block = _ref2[_l];
+          new_block = {
+            tooltip: block.head.slice(block.head.indexOf('.') + 1, block.head.lastIndexOf('(')).trim(),
+            frosting: block.children[0].head,
+            types: (function() {
+              var _len4, _m, _ref3, _results;
+              _ref3 = block.head.slice(block.head.lastIndexOf('(')).slice(1, -1).split(',');
               _results = [];
-              for (_l = 0, _len3 = _ref4.length; _l < _len3; _l++) {
-                child = _ref4[_l];
-                _results.push(child.head);
+              for (_m = 0, _len4 = _ref3.length; _m < _len4; _m++) {
+                type = _ref3[_m];
+                _results.push(type.trim());
               }
               return _results;
-            })();
+            })(),
+            dict: {}
+          };
+          nickname = block.head.slice(0, block.head.indexOf('.'));
+          if (nickname in operator_order) {
+            new_block.precedence = operator_order[nickname];
+          }
+          new_category.blocks[nickname] = new_block;
+          all[nickname] = new_block;
+          _ref3 = block.children[0].children;
+          for (_m = 0, _len4 = _ref3.length; _m < _len4; _m++) {
+            line = _ref3[_m];
+            _ref4 = line.head.split(':'), key = _ref4[0], value = _ref4[1];
+            new_block.dict[key] = {
+              tooltip: value
+            };
+            if (line.children.length > 0) {
+              new_block.dict[key].options = (function() {
+                var _len5, _n, _ref5, _results;
+                _ref5 = line.children;
+                _results = [];
+                for (_n = 0, _len5 = _ref5.length; _n < _len5; _n++) {
+                  child = _ref5[_n];
+                  _results.push(child.head);
+                }
+                return _results;
+              })();
+            }
           }
         }
       }
@@ -1487,11 +1580,27 @@ THE SOFTWARE.
     };
   };
 
+  bind_op = function(order, template, opbind, blockbind) {
+    var child, _i, _len, _ref;
+    template.opBinding = opbind;
+    template.blockBinding = blockbind;
+    template.precedence = order;
+    _ref = template.children;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      child = _ref[_i];
+      if (child.type === 'inline') {
+        child.precedence = order;
+      }
+    }
+    return template;
+  };
+
   window.ICE = {
     IceEditor: IceEditor,
     IceBlockSegment: IceBlockSegment,
     IceStaticSegment: IceStaticSegment,
     sub: defrost,
+    op: bind_op,
     frosting: function(str) {
       return to_frosting(destructure(str));
     }
