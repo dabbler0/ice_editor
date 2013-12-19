@@ -167,17 +167,17 @@ Variables
       value: What to add to the variable
 
   VAR_SUB. Subtract from a variable (command)
-    {{variable}} += {{value}}
+    {{variable}} -= {{value}}
       variable: The variable to subtract from
       value: What to subtract from the variable
 
   VAR_MUL. Multiply a variable by something (command)
-    {{variable}} += {{value}}
+    {{variable}} *= {{value}}
       variable: The variable to multiply
       value: What to multiply the variable by
 
   VAR_DIV. Divide a variable by something (command)
-    {{variable}} += {{value}}
+    {{variable}} /= {{value}}
       variable: The variable to divide
       value: What divide the variable by
 

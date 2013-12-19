@@ -502,7 +502,7 @@ class IceBlockSegment extends IceSegment
             children = _this.children()
             for child in childData
               if rawOverlap child.pos, genCornersPos origin_event, event
-                  child.element.css('outline', '2px solid #FF0')
+                  child.element.css('outline', '2px solid #FFF')
                 else
                   child.element.css('outline', '')
         
@@ -725,19 +725,45 @@ class IceHandwrittenSegment extends IceStatement
         new_block.find('.ice_input').focus()
 
       else if event.keyCode == 8 and this.value.length == 0
-        # Delete this element and remove its tree
-        prev = block.parent().prev().find('.ice_input')
-        focal = if prev.length > 0 then prev else block.parent().parent().siblings().filter('.ice_handwritten .ice_input').first()
-        
-        segment.parent.children.splice(segment.parent.children.indexOf(segment), 1)
-        
-        if segment.parent._trembling and segment.parent.children.length == 0
-          segment.parent.parent.children.pop()
-          block.parent().parent().remove()
-        
-        focal.focus()
+        # See if we want to unindent
+        if segment.parent.type is 'block' and segment.parent.parent?
+          # Reinsert ourselves in the abstract tree
+          segment.parent.children.splice(segment.parent.children.indexOf(segment), 1)
+          segment.parent.parent.parent.children.splice(segment.parent.parent.parent.children.indexOf(segment.parent.parent)+1, 0, segment)
 
-        block.parent().remove()
+          parent_el = block.parent()
+
+          parent_segment = block.parent().parent().parent().parent()
+          
+          # Preserve the block memory
+          block.detach()
+
+          if segment.parent._trembling and segment.parent.children.length == 0
+            segment.parent.parent.children.pop()
+            parent_el.parent().remove()
+
+          parent_el.remove()
+          parent_segment.after $('<div>').addClass('ice_block_command_wrapper').append block
+        
+          segment.parent = segment.parent.parent.parent
+          console.log 'parent set to', segment.parent
+
+          setTimeout (-> block.find('.ice_input').focus()), 0
+
+        else
+          # Delete this element and remove its tree
+          prev = block.parent().prev().find('.ice_input')
+          focal = if prev.length > 0 then prev else block.parent().parent().siblings().filter('.ice_handwritten .ice_input').first()
+          
+          segment.parent.children.splice(segment.parent.children.indexOf(segment), 1)
+          
+          if segment.parent._trembling and segment.parent.children.length == 0
+            segment.parent.parent.children.pop()
+            block.parent().parent().remove()
+          
+          focal.focus()
+
+          block.parent().remove()
         return false
       
       else if event.keyCode == 9 and segment.parent.type == 'block'
@@ -969,12 +995,42 @@ class IceEditor
       setTimeout (->
         $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(->
           tree = $(this).data 'ice_tree'
+          found = $(this).find('.ice_handwritten>.ice_input:focus')
+          reinsert_depth = -1
+          if found.size() > 0
+            found = found.parent()
+            reinsert_depth = 0
+            until (found = found.parent().parent().parent()).is(this) then reinsert_depth += 1
           try
             # This first-child hack is because we right now require blockifiers to wrap their entire thing in an IceBlock statement... We might want to be a bit more elegant. Or not.
             block = (blockifier tree.stringify()).children[0]
             block.parent = tree.parent
             tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
-            $(this).replaceWith block.blockify()
+            
+            # This is hacky.
+            if reinsert_depth >= 0
+              
+              # (find first-level block child)
+              for child in block.children
+                if child.type is 'block'
+                  temp_block = child
+                  break
+              
+              # (find remaining block children)
+              while reinsert_depth > 0
+                for child in temp_block.children[0].children
+                  if child.type is 'block'
+                    temp_block = child
+                    break
+                reinsert_depth -= 1
+              
+              new_handwritten = new IceHandwrittenSegment()
+              new_handwritten.parent = temp_block
+              temp_block.children.push new_handwritten
+
+            element = block.blockify()
+            $(this).replaceWith element
+            element.find('.ice_handwritten>.ice_input').focus()
           catch error
             console.log error
         )), 0

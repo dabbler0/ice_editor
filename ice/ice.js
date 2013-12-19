@@ -637,7 +637,7 @@ THE SOFTWARE.
               for (_j = 0, _len1 = childData.length; _j < _len1; _j++) {
                 child = childData[_j];
                 if (rawOverlap(child.pos, genCornersPos(origin_event, event))) {
-                  _results.push(child.element.css('outline', '2px solid #FF0'));
+                  _results.push(child.element.css('outline', '2px solid #FFF'));
                 } else {
                   _results.push(child.element.css('outline', ''));
                 }
@@ -873,7 +873,7 @@ THE SOFTWARE.
         return segment.children[0] = this.value;
       });
       input.keydown(function(event) {
-        var child, focal, new_block, new_parent, new_segment, p_prev, prev, _i, _len, _ref;
+        var child, focal, new_block, new_parent, new_segment, p_prev, parent_el, parent_segment, prev, _i, _len, _ref;
         if (event.keyCode === 13 && segment.parent.type === 'block') {
           new_segment = new IceHandwrittenSegment(segment.accepts);
           segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_segment);
@@ -882,15 +882,34 @@ THE SOFTWARE.
           block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(new_block));
           return new_block.find('.ice_input').focus();
         } else if (event.keyCode === 8 && this.value.length === 0) {
-          prev = block.parent().prev().find('.ice_input');
-          focal = prev.length > 0 ? prev : block.parent().parent().siblings().filter('.ice_handwritten .ice_input').first();
-          segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
-          if (segment.parent._trembling && segment.parent.children.length === 0) {
-            segment.parent.parent.children.pop();
-            block.parent().parent().remove();
+          if (segment.parent.type === 'block' && (segment.parent.parent != null)) {
+            segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
+            segment.parent.parent.parent.children.splice(segment.parent.parent.parent.children.indexOf(segment.parent.parent) + 1, 0, segment);
+            parent_el = block.parent();
+            parent_segment = block.parent().parent().parent().parent();
+            block.detach();
+            if (segment.parent._trembling && segment.parent.children.length === 0) {
+              segment.parent.parent.children.pop();
+              parent_el.parent().remove();
+            }
+            parent_el.remove();
+            parent_segment.after($('<div>').addClass('ice_block_command_wrapper').append(block));
+            segment.parent = segment.parent.parent.parent;
+            console.log('parent set to', segment.parent);
+            setTimeout((function() {
+              return block.find('.ice_input').focus();
+            }), 0);
+          } else {
+            prev = block.parent().prev().find('.ice_input');
+            focal = prev.length > 0 ? prev : block.parent().parent().siblings().filter('.ice_handwritten .ice_input').first();
+            segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
+            if (segment.parent._trembling && segment.parent.children.length === 0) {
+              segment.parent.parent.children.pop();
+              block.parent().parent().remove();
+            }
+            focal.focus();
+            block.parent().remove();
           }
-          focal.focus();
-          block.parent().remove();
           return false;
         } else if (event.keyCode === 9 && segment.parent.type === 'block') {
           p_prev = block.parent().prevAll('.ice_block_command_wrapper:first');
@@ -1173,13 +1192,48 @@ THE SOFTWARE.
       attempt_reblock = function() {
         return setTimeout((function() {
           return $('.ice_handwritten').not('.ice_handwritten .ice_handwritten').each(function() {
-            var error, tree;
+            var child, error, found, new_handwritten, reinsert_depth, temp_block, tree, _j, _k, _len1, _len2, _ref1, _ref2;
             tree = $(this).data('ice_tree');
+            found = $(this).find('.ice_handwritten>.ice_input:focus');
+            reinsert_depth = -1;
+            if (found.size() > 0) {
+              found = found.parent();
+              reinsert_depth = 0;
+              while (!(found = found.parent().parent().parent()).is(this)) {
+                reinsert_depth += 1;
+              }
+            }
             try {
               block = (blockifier(tree.stringify())).children[0];
               block.parent = tree.parent;
               tree.parent.children.splice(tree.parent.children.indexOf(tree), 1, block);
-              return $(this).replaceWith(block.blockify());
+              if (reinsert_depth >= 0) {
+                _ref1 = block.children;
+                for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                  child = _ref1[_j];
+                  if (child.type === 'block') {
+                    temp_block = child;
+                    break;
+                  }
+                }
+                while (reinsert_depth > 0) {
+                  _ref2 = temp_block.children[0].children;
+                  for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+                    child = _ref2[_k];
+                    if (child.type === 'block') {
+                      temp_block = child;
+                      break;
+                    }
+                  }
+                  reinsert_depth -= 1;
+                }
+                new_handwritten = new IceHandwrittenSegment();
+                new_handwritten.parent = temp_block;
+                temp_block.children.push(new_handwritten);
+              }
+              element = block.blockify();
+              $(this).replaceWith(element);
+              return element.find('.ice_handwritten>.ice_input').focus();
             } catch (_error) {
               error = _error;
               return console.log(error);
