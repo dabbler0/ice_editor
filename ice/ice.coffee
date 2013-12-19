@@ -726,7 +726,7 @@ class IceHandwrittenSegment extends IceStatement
 
       else if event.keyCode == 8 and this.value.length == 0
         # See if we want to unindent
-        if segment.parent.type is 'block' and segment.parent.parent?
+        if segment.parent.type is 'block' and segment.parent.parent? and segment.parent.parent.parent.type is 'block'
           # Reinsert ourselves in the abstract tree
           segment.parent.children.splice(segment.parent.children.indexOf(segment), 1)
           segment.parent.parent.parent.children.splice(segment.parent.parent.parent.children.indexOf(segment.parent.parent)+1, 0, segment)

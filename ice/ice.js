@@ -882,7 +882,7 @@ THE SOFTWARE.
           block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(new_block));
           return new_block.find('.ice_input').focus();
         } else if (event.keyCode === 8 && this.value.length === 0) {
-          if (segment.parent.type === 'block' && (segment.parent.parent != null)) {
+          if (segment.parent.type === 'block' && (segment.parent.parent != null) && segment.parent.parent.parent.type === 'block') {
             segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
             segment.parent.parent.parent.children.splice(segment.parent.parent.parent.children.indexOf(segment.parent.parent) + 1, 0, segment);
             parent_el = block.parent();
