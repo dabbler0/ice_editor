@@ -6,7 +6,7 @@
   border: 1px solid #888;
   white-space: pre;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-  cursor: url(../images/openhand.cur), default !important;
+  cursor: url(images/openhand.cur), default !important;
   min-width: 20px;
   min-height: 20px;
 }
@@ -122,7 +122,7 @@ span.highlight {
 
 .ui-helper {
   opacity: 0.7;
-  cursor: url(../images/closedhand.cur), default !important;
+  cursor: url(iages/closedhand.cur), default !important;
 }
 
 .ice_selector {
