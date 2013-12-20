@@ -11,7 +11,7 @@ op = (order, template) ->
     this.children.shift last
     this.parenWrapped = true),
   (block) ->
-    if block.children.first().data('ice_tree') != this.children[0] #Hacky...
+    if block.children().first().data('ice_tree') != this.children[0] #Hacky...
       block.prepend(this.children[0]).append(this.children[this.children.length - 1])
 
 

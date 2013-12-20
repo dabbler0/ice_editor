@@ -13,7 +13,7 @@
       this.children.shift(last);
       return this.parenWrapped = true;
     }), function(block) {
-      if (block.children.first().data('ice_tree') !== this.children[0]) {
+      if (block.children().first().data('ice_tree') !== this.children[0]) {
         return block.prepend(this.children[0]).append(this.children[this.children.length - 1]);
       }
     });
