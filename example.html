@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <title> ICE Editor Demo </title>
+    <link rel='stylesheet' href='ice/ice.css'/>
+    <link rel='stylesheet' href="vendor/tooltipster.css"/>
+    <script src="vendor/ace/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="vendor/coffee-script.js"></script>
+    <script src="vendor/jquery.min.js"></script>
+    <script src="vendor/jquery-ui.min.js"></script>
+    <script src="vendor/jquery.ui.position.js"></script>
+    <script src="vendor/jquery.hotkeys.js"></script>
+    <script src="vendor/autogrow.js"></script>
+    <script src="vendor/jquery.tooltipster.min.js"></script>
+    <script src="ice/ice.js"></script>
+    <script src="ice/coffee.js"></script>
+    <script src="example.js"></script>
+    <style>
+      #editor {
+        font-size: 15px;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+      #left {
+        border: none;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 500px;
+      }
+      #right {
+        border: none;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        left: 500px;
+      }
+      #runframe {
+        height: 500px;
+        width: 500px;
+        border: none;
+        border-bottom: 1px solid #000;
+        background-color: #FFF;
+      }
+      #toggle, #run {
+        cursor: pointer;
+        background-color: #4c66b2;
+        border: none;
+        color: #FFF;
+        height: 40px;
+        opacity: 0.5;
+        outline: none;
+        font-size: 18px;
+        z-index: 256;
+        border-bottom-left-radius: 5;
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 0;
+      }
+      /*
+      #toggle {
+        border-bottom-left-radius: 5;
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+      #run {
+        position: absolute;
+        top: 0;
+        left: 0;
+        border-bottom-right-radius: 5;
+      }
+      */
+      #toggle:hover, #run:hover {
+        opacity: 1;
+        background-color: #00F;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="left" class="blockish">
+      <iframe id="runframe" src="blank.html"></iframe>
+      <button id="run">
+        Run
+      </button>
+    </div>
+    <div id="right" class="blockish">
+      <div id="right_top" class="blockish">
+        <button id="toggle">
+          Toggle Blocks
+        </button>
+      </div>
+      <div id="editor">
+      </div>
+    </div>
+  </body>
+</html>
