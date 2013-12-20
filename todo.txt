@@ -1,5 +1,4 @@
 The Big Todo List
-  1. When autoblocking, reinsert cursor where it was before
   2. Dehackify the autoparens system (compartmentalize it somehow -- parens should be the _mode_'s job, not the editor's).
   3. Allow binding to editor content change
   4. Full AST understanding.

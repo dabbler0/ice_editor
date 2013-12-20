@@ -10,11 +10,19 @@
       first = new ICE.IceStaticSegment('(');
       last = new ICE.IceStaticSegment(')');
       this.children.unshift(first);
-      this.children.shift(last);
-      return this.parenWrapped = true;
+      return this.children.push(last);
+    }), (function() {
+      this.children.shift();
+      return this.children.pop();
     }), function(block) {
+      console.log('I was called...');
       if (block.children().first().data('ice_tree') !== this.children[0]) {
-        return block.prepend(this.children[0]).append(this.children[this.children.length - 1]);
+        if (this.parenWrapped) {
+          return block.prepend(this.children[0].blockify()).append(this.children[this.children.length - 1].blockify());
+        } else {
+          block.children().first().remove();
+          return block.children().last().remove();
+        }
       }
     });
   };

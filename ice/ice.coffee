@@ -746,7 +746,6 @@ class IceHandwrittenSegment extends IceStatement
           parent_segment.after $('<div>').addClass('ice_block_command_wrapper').append block
         
           segment.parent = segment.parent.parent.parent
-          console.log 'parent set to', segment.parent
 
           setTimeout (-> block.find('.ice_input').focus()), 0
 
@@ -776,10 +775,11 @@ class IceHandwrittenSegment extends IceStatement
         # Remove us from our current situation
         segment.parent.children.splice(segment.parent.children.indexOf(segment), 1)
 
-
         for child in prev.children.slice(0).reverse()
+          console.log 'checking', child
           # If there is, append us to it
           if child.type == 'block'
+            console.log 'found one!'
             child.children.push segment
             segment.parent = child
             block.parent().detach()
@@ -1003,13 +1003,17 @@ class IceEditor
             until (found = found.parent().parent().parent()).is(this) then reinsert_depth += 1
           try
             # This first-child hack is because we right now require blockifiers to wrap their entire thing in an IceBlock statement... We might want to be a bit more elegant. Or not.
-            block = (blockifier tree.stringify()).children[0]
-            block.parent = tree.parent
-            tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
+            if tree.children[0] is 'else' # This is hacky.
+              block = blockifier(tree.parent.children[tree.parent.children.indexOf(tree) - 1].stringify() + '\n' + tree.stringify()).children[0]
+              block.parent = tree.parent
+              tree.parent.children.splice tree.parent.children.indexOf(tree) - 1, 2, block
+            else
+              block = (blockifier tree.stringify()).children[0]
+              block.parent = tree.parent
+              tree.parent.children.splice tree.parent.children.indexOf(tree), 1, block
             
             # This is hacky.
             if reinsert_depth >= 0
-              
               # (find first-level block child)
               for child in block.children
                 if child.type is 'block'
@@ -1029,7 +1033,11 @@ class IceEditor
               temp_block.children.push new_handwritten
 
             element = block.blockify()
-            $(this).replaceWith element
+            if tree.children[0] is 'else'
+              $(this).parent().prev().children().replaceWith element
+              $(this).parent().remove()
+            else
+              $(this).replaceWith element
             element.find('.ice_handwritten>.ice_input').focus()
           catch error
             console.log error
@@ -1358,9 +1366,10 @@ to_frosting = (structure) ->
     all: all
   }
 
-bind_op = (order, template, opbind, blockbind) ->
+bind_op = (order, template, opbind, unbind, blockbind) ->
   template.opBinding = opbind
   template.blockBinding = blockbind
+  template.opUnbinding = unbind
   template.precedence = order
   for child in template.children
     if child.type is 'inline'

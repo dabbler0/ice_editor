@@ -8,11 +8,19 @@ op = (order, template) ->
     first = new ICE.IceStaticSegment('(')
     last = new ICE.IceStaticSegment(')')
     this.children.unshift first
-    this.children.shift last
-    this.parenWrapped = true),
+    this.children.push last),
+  (->
+    this.children.shift()
+    this.children.pop()
+  ),
   (block) ->
+    console.log 'I was called...'
     if block.children().first().data('ice_tree') != this.children[0] #Hacky...
-      block.prepend(this.children[0]).append(this.children[this.children.length - 1])
+      if this.parenWrapped
+        block.prepend(this.children[0].blockify()).append(this.children[this.children.length - 1].blockify())
+      else
+        block.children().first().remove()
+        block.children().last().remove()
 
 
 fitsAwait = (node) ->
