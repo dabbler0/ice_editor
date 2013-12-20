@@ -1,0 +1,199 @@
+.ice_statement, .ice_inline {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 3px;
+  border: 1px solid #888;
+  white-space: pre;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  cursor: url(../images/openhand.cur), default !important;
+  min-width: 20px;
+  min-height: 20px;
+}
+.ice_statement {
+  padding: 2px;
+}
+.ice_block {
+  position: relative;
+  display: block;
+  border-radius: 3px;
+  border: 1px solid #888;
+  min-height: 30px;
+  margin-left: 2ex;
+  background-color: #DDD;
+  cursor: default;
+}
+.ice_inline {
+  background-color: #FFF;
+}
+.ice_handwritten {
+  background-color: #FFF;
+}
+.ice_block_drop_target, .ice_drop_target {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 10px;
+}
+
+.ice_drop_target {
+  bottom: -5;
+  z-index: 250;
+}
+.ice_block_drop_target {
+  top: -5;
+}
+
+.ice_block_drop_target:only-child {
+  top: 0;
+  height: 100%;
+}
+
+.highlight {
+  background-color: #FFF;
+}
+span.highlight {
+  box-shadow: 0 0 3px 3px #FFF;
+}
+.blockish {
+  position: absolute;
+  border: 1px solid #888;
+  overflow: auto;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+}
+.ice_palette {
+  width: 250px;
+  white-space: nowrap;
+}
+.ice_workspace {
+  left: 250px;
+  background-color: #DDD;
+}
+
+.ice_workspace > .ice_block {
+  margin-left: 0px;
+  border: none;
+  min-height: 100%;
+}
+
+.ice_palette_template_wrapper {
+  padding: 5px;
+}
+
+.ice_input {
+  font-size: 15px;
+  height: 20px;
+  width: 20px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  border: none;
+  border-radius: 3px;
+}
+
+.ice_segment ~ .ice_input {
+  display: none;
+}
+.ice_segment ~ .combobox-searcher {
+  display: none;
+}
+
+/* Example stuff */
+.ice_syntax_type_value {
+  background-color: #BFB;
+}
+.ice_syntax_type_command {
+  background-color: #BBF;
+}
+.ice_syntax_type_command.ice_syntax_type_value {
+  background-color: #BFF;
+}
+.ice_syntax_type_command.ice_syntax_type_return {
+  background-color: #FBB;
+}
+.ice_syntax_type_control.ice_syntax_type_command {
+  background-color: #FFDEA2;
+}
+
+.ice_big_inline_wrapper {
+  margin-left: 2ex;
+}
+
+.ui-helper {
+  opacity: 0.7;
+  cursor: url(../images/closedhand.cur), default !important;
+}
+
+.ice_selector {
+  border: 2px solid #55D;
+  position: absolute;
+  z-index: 256;
+  background-color: rgba(176, 176, 256, 0.5);
+}
+
+.ice_root_bottom_div {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.ace_gutter {
+  width: 60px !important;
+}
+
+.ice_selected_highlight {
+  outline: 2px solid #FFF;
+}
+
+.ui-autocomplete {
+  position: absolute;
+  z-index: 200;
+  background-color: #FFF;
+  border: 1px solid #000;
+  border-radius: 3px;
+  padding-left: 0;
+}
+
+.ui-autocomplete a.ui-state-focus {
+  background-color: #DDD;
+}
+
+.ui-autocomplete li {
+  list-style-type: none;
+}
+
+.combobox-searcher {
+  background-color: transparent;
+  border: none;
+  width: 20px;
+}
+
+.ice_multi_button {
+  background-color: transparent;
+  height: 20px;
+  width: 20px;
+  margin-left: 5px;
+  text-align: center;
+  border-radius: 5px;
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.ice_multi_button:hover {
+  background-color: #BBB;
+}
+
+.ui-tooltip {
+        padding: 8px;
+        position: absolute;
+        z-index: 9999;
+        max-width: 300px;
+        -webkit-box-shadow: 0 0 5px #aaa;
+        box-shadow: 0 0 5px #aaa;
+        background-color: #FFF;
+}
+body .ui-tooltip {
+        border-width: 2px;
+}
