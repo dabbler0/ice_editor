@@ -91,6 +91,8 @@
         },
         'moveto': function(args) {
           switch (args.length) {
+            case 1:
+              return sub(coffee.MOVETO_ONEARG, args[0]);
             case 2:
               return sub(coffee.MOVETO, args[0], args[1]);
             default:

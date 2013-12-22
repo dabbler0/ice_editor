@@ -603,33 +603,34 @@ class IceStatement extends IceSegment
     block.data 'ice_tree', segment
 
     # Create the drop target
-    drop_target = $ '<div>'
-    drop_target.addClass 'ice_drop_target'
+    if not ('return' in @syntax_type)
+      drop_target = $ '<div>'
+      drop_target.addClass 'ice_drop_target'
+      
+      # Make it droppable
+      drop_target.droppable
+        greedy: true
+        tolerance: 'corner'
+        hoverClass: 'highlight'
+        accept: -> segment.droppable
+        drop: (event, ui) ->
+          if event.target == this
+            tree = ui.draggable.data('ice_tree')
+            if tree.parent? and tree.parent.type == 'block'
+              ui.draggable.parent().detach()
+            if ui.draggable.parent().hasClass('ice_block_command_wrapper')
+              ui.draggable.parent().detach()
+            block.parent().after $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
+            moveSegment tree, segment
     
-    # Make it droppable
-    drop_target.droppable
-      greedy: true
-      tolerance: 'corner'
-      hoverClass: 'highlight'
-      accept: -> segment.droppable
-      drop: (event, ui) ->
-        if event.target == this
-          tree = ui.draggable.data('ice_tree')
-          if tree.parent? and tree.parent.type == 'block'
-            ui.draggable.parent().detach()
-          if ui.draggable.parent().hasClass('ice_block_command_wrapper')
-            ui.draggable.parent().detach()
-          block.parent().after $('<div>').addClass('ice_block_command_wrapper').append ui.draggable
-          moveSegment tree, segment
-    
-    drop_target.click ->
-      if segment.droppable
-        new_block = new IceHandwrittenSegment()
-        segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_block)
-        new_block.parent = segment.parent
-        new_block_el = new_block.blockify()
-        block.parent().after $('<div>').addClass('ice_block_command_wrapper').append new_block_el
-        new_block_el.find('.ice_input').focus()
+      drop_target.click ->
+        if segment.droppable
+          new_block = new IceHandwrittenSegment()
+          segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_block)
+          new_block.parent = segment.parent
+          new_block_el = new_block.blockify()
+          block.parent().after $('<div>').addClass('ice_block_command_wrapper').append new_block_el
+          new_block_el.find('.ice_input').focus()
     
     # Append it to the block
     block.append drop_target
@@ -724,7 +725,7 @@ class IceHandwrittenSegment extends IceStatement
         block.parent().after $('<div>').addClass('ice_block_command_wrapper').append new_block
         new_block.find('.ice_input').focus()
 
-      else if event.keyCode == 8 and this.value.length == 0
+      else if event.keyCode == 8 and this.selectionStart is 0 or this.selectionStart is '0'
         # See if we want to unindent
         if segment.parent.type is 'block' and segment.parent.parent? and segment.parent.parent.parent.type is 'block'
           # Reinsert ourselves in the abstract tree
@@ -749,7 +750,7 @@ class IceHandwrittenSegment extends IceStatement
 
           setTimeout (-> block.find('.ice_input').focus()), 0
 
-        else
+        else if this.value.length is 0
           # Delete this element and remove its tree
           prev = block.parent().prev().find('.ice_input')
           focal = if prev.length > 0 then prev else block.parent().parent().siblings().filter('.ice_handwritten .ice_input').first()

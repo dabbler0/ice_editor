@@ -92,6 +92,7 @@ $.ajax
         else sub coffee.CALL, 'tick', args[0]
       'moveto': (args) ->
         switch args.length
+          when 1 then sub coffee.MOVETO_ONEARG, args[0]
           when 2 then sub coffee.MOVETO, args[0], args[1]
           else sub coffee.CALL, 'moveto', args
       'rt': (args) ->

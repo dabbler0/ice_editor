@@ -755,41 +755,43 @@ THE SOFTWARE.
         }
       }
       block.data('ice_tree', segment);
-      drop_target = $('<div>');
-      drop_target.addClass('ice_drop_target');
-      drop_target.droppable({
-        greedy: true,
-        tolerance: 'corner',
-        hoverClass: 'highlight',
-        accept: function() {
-          return segment.droppable;
-        },
-        drop: function(event, ui) {
-          var tree;
-          if (event.target === this) {
-            tree = ui.draggable.data('ice_tree');
-            if ((tree.parent != null) && tree.parent.type === 'block') {
-              ui.draggable.parent().detach();
+      if (!(__indexOf.call(this.syntax_type, 'return') >= 0)) {
+        drop_target = $('<div>');
+        drop_target.addClass('ice_drop_target');
+        drop_target.droppable({
+          greedy: true,
+          tolerance: 'corner',
+          hoverClass: 'highlight',
+          accept: function() {
+            return segment.droppable;
+          },
+          drop: function(event, ui) {
+            var tree;
+            if (event.target === this) {
+              tree = ui.draggable.data('ice_tree');
+              if ((tree.parent != null) && tree.parent.type === 'block') {
+                ui.draggable.parent().detach();
+              }
+              if (ui.draggable.parent().hasClass('ice_block_command_wrapper')) {
+                ui.draggable.parent().detach();
+              }
+              block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
+              return moveSegment(tree, segment);
             }
-            if (ui.draggable.parent().hasClass('ice_block_command_wrapper')) {
-              ui.draggable.parent().detach();
-            }
-            block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(ui.draggable));
-            return moveSegment(tree, segment);
           }
-        }
-      });
-      drop_target.click(function() {
-        var new_block, new_block_el;
-        if (segment.droppable) {
-          new_block = new IceHandwrittenSegment();
-          segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_block);
-          new_block.parent = segment.parent;
-          new_block_el = new_block.blockify();
-          block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(new_block_el));
-          return new_block_el.find('.ice_input').focus();
-        }
-      });
+        });
+        drop_target.click(function() {
+          var new_block, new_block_el;
+          if (segment.droppable) {
+            new_block = new IceHandwrittenSegment();
+            segment.parent.children.splice(segment.parent.children.indexOf(segment) + 1, 0, new_block);
+            new_block.parent = segment.parent;
+            new_block_el = new_block.blockify();
+            block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(new_block_el));
+            return new_block_el.find('.ice_input').focus();
+          }
+        });
+      }
       block.append(drop_target);
       block.draggable({
         appendTo: 'body',
@@ -881,7 +883,7 @@ THE SOFTWARE.
           new_block = new_segment.blockify();
           block.parent().after($('<div>').addClass('ice_block_command_wrapper').append(new_block));
           return new_block.find('.ice_input').focus();
-        } else if (event.keyCode === 8 && this.value.length === 0) {
+        } else if (event.keyCode === 8 && this.selectionStart === 0 || this.selectionStart === '0') {
           if (segment.parent.type === 'block' && (segment.parent.parent != null) && segment.parent.parent.parent.type === 'block') {
             segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);
             segment.parent.parent.parent.children.splice(segment.parent.parent.parent.children.indexOf(segment.parent.parent) + 1, 0, segment);
@@ -898,7 +900,7 @@ THE SOFTWARE.
             setTimeout((function() {
               return block.find('.ice_input').focus();
             }), 0);
-          } else {
+          } else if (this.value.length === 0) {
             prev = block.parent().prev().find('.ice_input');
             focal = prev.length > 0 ? prev : block.parent().parent().siblings().filter('.ice_handwritten .ice_input').first();
             segment.parent.children.splice(segment.parent.children.indexOf(segment), 1);

@@ -307,6 +307,10 @@ Turtle
     moveto {{x}}, {{y}}
       x: The x-coordinate to move the turtle to
       y: The y-coordinate to move the turtle to
+
+  MOVETO_ONEARG. Move the turtle to another place (command)
+    moveto {{place}}
+      place: The place or object to move the turtle to
   
   PLAY. Play some music (command)
     play {{notes}}

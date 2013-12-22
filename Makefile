@@ -1,8 +1,7 @@
-all: ice example doc
-
-ice:
-	coffee -c ice/ice.coffee
-example:
-	coffee -c example.coffee
-doc:
-	markdown README.md > README.html
+all:
+	coffee -cm ice/coffee.coffee
+	coffee -cm ice/ice.coffee 
+	coffee -cm example.coffee
+	cat ice/coffee.js ice/ice.js example.js > ex.js
+	uglifyjs ex.js > ex.min.js
+	git checkout ex.min.js gh-pages
